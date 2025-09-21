@@ -1,8 +1,6 @@
 name: Daily Portfolio Update and Deploy
 
 on:
-  push:
-    branches: [main]
   schedule:
     - cron: '0 0 * * *' # Runs at 12:00 AM UTC every day
   workflow_dispatch:
@@ -20,19 +18,19 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install dependencies
+      - name: Install dependencies from requirements.txt
         run: |
           python -m pip install --upgrade pip
-          pip install pandas
+          pip install -r requirements.txt
 
-      - name: Run fetch_data.py to populate database
-        run: python fetch_data.py
+      - name: Run file1.py to populate database
+        run: python file1.py
 
-      - name: Run calculations.py to populate database
-        run: python calculations.py
+      - name: Run file2.py to populate database
+        run: python file2.py
 
-      - name: Run report.py to generate report and HTML
-        run: python report.py
+      - name: Run mf_manager.py to generate report and HTML
+        run: python mf_manager.py
     
       - name: Commit and push changes
         run: |
