@@ -38,7 +38,7 @@ def generate_final_report(db_name="mf.db"):
             'Gold': {'keywords': ['Gold'], 'percentage': 0.10},
         }
 
-        report_output = "<h3>📈 Mutual Fund Recommendations</h3>"
+        report_output = "<h3>Mutual Fund Recommendations</h3>"
         report_output += "<p>This report provides top-rated funds based on your criteria.</p>"
         
         recommended_funds = []
@@ -294,7 +294,7 @@ def generate_report_and_html():
     </head>
     <body>
         <div class="container">
-            <h1>📊 FinZen: Mutual Fund Report</h1>
+            <h1>FinZen: Mutual Fund Report</h1>
             <p>Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
             {recommendation_report}
             <hr>
