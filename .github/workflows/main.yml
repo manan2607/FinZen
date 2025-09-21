@@ -4,24 +4,30 @@ on:
   push:
     branches: [main]
   schedule:
-    - cron: '0 0 * * 1' # Runs every Monday at midnight
+    - cron: '0 0 * * 1'  # Every Monday at midnight
 
 jobs:
   job1_data_collection:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - run: |
+      - name: Install dependencies
+        run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          python file1.py
 
-      - uses: actions/upload-artifact@v4
+      - name: Run data collection
+        run: python file1.py
+
+      - name: Upload database
+        uses: actions/upload-artifact@v4
         with:
           name: mf-database
           path: mf.db
@@ -30,19 +36,30 @@ jobs:
     runs-on: ubuntu-latest
     needs: job1_data_collection
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: |
+
+      - name: Install dependencies
+        run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      - uses: actions/download-artifact@v4
+
+      - name: Download database artifact
+        uses: actions/download-artifact@v4
         with:
           name: mf-database
           path: .
-      - run: python file2.py
-      - uses: actions/upload-artifact@v4
+
+      - name: Run analysis
+        run: python file2.py
+
+      - name: Upload updated database
+        uses: actions/upload-artifact@v4
         with:
           name: mf-database-with-metrics
           path: mf.db
@@ -51,19 +68,30 @@ jobs:
     runs-on: ubuntu-latest
     needs: job2_analysis
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: |
+
+      - name: Install dependencies
+        run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-      - uses: actions/download-artifact@v4
+
+      - name: Download database with metrics
+        uses: actions/download-artifact@v4
         with:
           name: mf-database-with-metrics
           path: .
-      - run: python file3.py
-      - uses: actions/upload-artifact@v4
+
+      - name: Generate HTML report
+        run: python file3.py
+
+      - name: Upload HTML report
+        uses: actions/upload-artifact@v4
         with:
           name: html-report
           path: report.html
@@ -74,21 +102,21 @@ jobs:
     permissions:
       contents: write
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Create publish directory
-      run: mkdir public
+      - name: Create publish directory
+        run: mkdir public
 
-    - name: Download HTML report artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: html-report
-        path: public   # <— Put report.html here
+      - name: Download HTML report artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: html-report
+          path: public
 
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: public  # <— Deploy this folder
-        publish_branch: gh-pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: public
+          publish_branch: gh-pages
