@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import datetime as dt
 from dateutil.relativedelta import relativedelta
-from file1_data import fetch_all_fund_data, fetch_benchmark_data
+from file1 import fetch_all_fund_data, fetch_benchmark_data
 import sqlite3
 
 def calculate_cagr(start_value, end_value, years):

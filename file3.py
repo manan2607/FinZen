@@ -3,8 +3,8 @@
 import sqlite3
 import pandas as pd
 from flask import Flask, render_template_string
-from file1_data import setup_database
-from file2_analysis import run_analysis_and_save_metrics
+from file1 import setup_database
+from file2 import run_analysis_and_save_metrics
 
 app = Flask(__name__)
 

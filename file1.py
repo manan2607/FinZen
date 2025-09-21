@@ -49,14 +49,14 @@ def fetch_and_store_all_data(conn, cursor):
         scheme_info_data = []
 
         print("Starting data fetch for all mutual funds...")
-        for scheme_code, scheme_name in all_schemes.items():
+        for scheme_code, scheme_name in list(all_schemes.items())[:5]:
             try:
                 details = mf.get_scheme_details(scheme_code)
                 if details is None:
                     continue
                 scheme_info_data.append((scheme_code, details.get('scheme_name'), details.get('fund_house'), details.get('scheme_type')))
 
-                historical_navs = mf.get_scheme_historical_nav(scheme_code)
+                historical_navs = mf.get_scheme_historical_nav(scheme_code)['data']
                 if isinstance(historical_navs, list) and historical_navs:
                     nav_records = [(scheme_code, record['date'], float(record['nav'])) for record in historical_navs]
                     cursor.executemany("INSERT OR IGNORE INTO nav_history VALUES (?, ?, ?)", nav_records)
