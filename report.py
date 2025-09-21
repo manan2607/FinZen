@@ -135,7 +135,7 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=10000):
             fund_nav, units, purchase_date
         ))
 
-    cursor.executemany("INSERT OR REPLACE INTO virtual_portfolio VALUES (?, ?, ?, ?, ?, ?, ?)", portfolio_data)
+    cursor.executemany("INSERT INTO virtual_portfolio VALUES (?, ?, ?, ?, ?, ?, ?)", portfolio_data)
     conn.commit()
 
     portfolio_df = pd.DataFrame(portfolio_data, columns=['scheme_code', 'name', 'category', 'investment_amount', 'purchase_nav', 'units', 'purchase_date'])
