@@ -1,0 +1,104 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mutual Fund Portfolio Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #444;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        pre {
+            background: #f8f8f8;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        code {
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .note {
+            background-color: #e6f7ff;
+            border-left: 5px solid #337ab7;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mutual Fund Portfolio Tracker</h1>
+        <p>This page provides instructions and a code template for a simple mutual fund analysis and tracking system.</p>
+        
+        <div class="section">
+            <h2>Overview</h2>
+            <p>The Python script below combines three main functionalities:</p>
+            <ol>
+                <li><strong>Report Generation:</strong> Filters and recommends top mutual funds based on performance metrics.</li>
+                <li><strong>Portfolio Booking:</strong> Creates a virtual portfolio based on the recommendations and a specified investment amount.</li>
+                <li><strong>Performance Tracking:</strong> Calculates and displays the current value and profit/loss of the virtual portfolio.</li>
+            </ol>
+        </div>
+
+        <div class="section">
+            <h2>Prerequisites</h2>
+            <p>You'll need Python, the <code>pandas</code> library, and a database file named <code>mf.db</code> with tables for <code>fund_metrics</code> and <code>nav_history</code>.</p>
+            <pre><code>pip install pandas</code></pre>
+        </div>
+
+        <div class="section">
+            <h2>Combined Python Code</h2>
+            <p>Save the following code as <code>mf_manager.py</code>.</p>
+            <pre><code id="python-code">
+import sqlite3
+import pandas as pd
+# ... (rest of the Python code goes here)
+            </code></pre>
+            <p><strong>Note:</strong> The full Python code is too long to display directly, but you should copy the entire script from the combined file.</p>
+        </div>
+
+        <div class="section">
+            <h2>How to Use</h2>
+            <ol>
+                <li><strong>Run the Analysis:</strong> Before running, make sure your database file <code>mf.db</code> is populated.</li>
+                <li><strong>Book Portfolio:</strong> Run <code>python mf_manager.py</code>. The script will first generate the report and then book the portfolio.</li>
+                <li><strong>Track Performance:</strong> To check the portfolio's performance later, run the script again. It will automatically track the existing portfolio.</li>
+            </ol>
+        </div>
+
+        <div class="note">
+            <h3>Deploying on GitHub Pages</h3>
+            <p>GitHub Pages is for static websites (HTML, CSS, JavaScript). You cannot run Python scripts directly on it. To "deploy" this project on GitHub Pages, you would:</p>
+            <ol>
+                <li>Create a GitHub repository.</li>
+                <li>Save this HTML content as an <code>index.html</code> file in the root of your repository.</li>
+                <li>Go to your repository's **Settings > Pages** and select your `main` or `master` branch as the source for GitHub Pages.</li>
+                <li>This will create a public URL (e.g., <code>your-username.github.io/your-repo</code>) where this static webpage will be visible. It serves as a documentation page for your Python script, not a live application.</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>
