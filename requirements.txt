@@ -4,4 +4,3 @@ scipy
 yfinance
 deprecated
 nsetools
-flask
