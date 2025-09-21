@@ -12,8 +12,12 @@ def generate_final_report(db_name="mf.db"):
     conn = sqlite3.connect(db_name)
     try:
         metrics_df = pd.read_sql_query("SELECT * FROM fund_metrics", conn)
+        
         if metrics_df.empty:
-            return "No metrics found in the database. Please run the analysis script first."
+            # Correction: Return a tuple of two values, with the second being None
+            return "<p>No metrics found in the database. Please run the analysis script first.</p>", None
+
+        # ... (rest of the code)
 
         filtered_df = metrics_df[
             (metrics_df['sharpe_ratio'] > 0.0) & 
@@ -23,8 +27,9 @@ def generate_final_report(db_name="mf.db"):
         ].copy()
 
         if filtered_df.empty:
-            return "No funds meet the filtering criteria. Skipping final report."
-
+            # Correction: Return a tuple of two values, with the second being None
+            return "<p>No funds meet the filtering criteria. Skipping final report.</p>", None
+            
         filtered_df['final_score'] = (
             filtered_df['sharpe_ratio'] * 0.4 +
             filtered_df['sortino_ratio'] * 0.4 +
@@ -72,9 +77,9 @@ def generate_final_report(db_name="mf.db"):
                 report_output += "<li>No suitable funds found for this category.</li>"
             report_output += "</ul>"
         
-        return report_output, recommended_funds
+        return report_output, recommended_funds # This is already correct
     except Exception as e:
-        return f"An error occurred: {e}", None
+        return f"An error occurred: {e}", None # This is already correct
     finally:
         conn.close()
 
