@@ -74,18 +74,21 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Download HTML report artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: html-report
-          path: public
+    - name: Create publish directory
+      run: mkdir public
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: public
-          force_orphan: true
+    - name: Download HTML report artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: html-report
+        path: public   # <— Put report.html here
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: public  # <— Deploy this folder
+        publish_branch: gh-pages
