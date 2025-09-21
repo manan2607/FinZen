@@ -30,7 +30,7 @@ all_schemes = mf.get_scheme_codes()
 scheme_info_data = []
 
 print("Starting data fetch for all mutual funds...")
-for scheme_code, scheme_name in list(all_schemes.items())[1:50]:
+for scheme_code, scheme_name in list(all_schemes.items())[1:]:
     try:
         
         details = mf.get_scheme_details(scheme_code)
