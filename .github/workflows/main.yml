@@ -12,12 +12,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4 # Updated to v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5 # Updated to v5
         with:
-          python-version: '3.11' # Use a specific Python version
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
@@ -25,10 +25,10 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run data collection script
-        run: python file1.py
+        run: python file1_data.py
       
       - name: Upload database artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: mf-database
           path: mf.db
@@ -38,10 +38,10 @@ jobs:
     needs: job1_data_collection
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -51,16 +51,16 @@ jobs:
           pip install -r requirements.txt
 
       - name: Download database artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4 # Updated to v4
         with:
           name: mf-database
           path: .
           
       - name: Run analysis script
-        run: python file2.py
+        run: python file2_analysis.py
 
       - name: Upload updated database artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: mf-database-with-metrics
           path: mf.db
@@ -70,10 +70,10 @@ jobs:
     needs: job2_analysis
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
@@ -83,11 +83,11 @@ jobs:
           pip install -r requirements.txt
       
       - name: Download final database artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4 # Updated to v4
         with:
           name: mf-database-with-metrics
           path: .
       
       - name: Generate and upload HTML reports
         run: |
-          python file3.py
+          python file3_report.py
