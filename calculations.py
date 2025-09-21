@@ -146,7 +146,6 @@ if __name__ == "__main__":
 
     if not metrics_df.empty:
         print("\n--- Advanced Performance Metrics ---")
-        print(metrics_df.to_string(index=False))
     else:
         print("No funds with sufficient data for analysis.")
     
