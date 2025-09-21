@@ -25,7 +25,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run data collection script
-        run: python file1_data.py
+        run: python file1.py
       
       - name: Upload database artifact
         uses: actions/upload-artifact@v4
@@ -57,7 +57,7 @@ jobs:
           path: .
           
       - name: Run analysis script
-        run: python file2_analysis.py
+        run: python file2.py
 
       - name: Upload updated database artifact
         uses: actions/upload-artifact@v4
@@ -90,4 +90,4 @@ jobs:
       
       - name: Generate and upload HTML reports
         run: |
-          python file3_report.py
+          python file3.py
