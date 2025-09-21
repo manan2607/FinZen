@@ -80,7 +80,9 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
 
     if not recommended_funds:
         return "<p>No funds to book. Skipping portfolio creation.</p>"
-
+    
+    c = sqlite3.connect("portfolio.db")
+    cur = c.cursor()
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
 
@@ -91,7 +93,7 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
     if latest_navs.empty:
         return "<p>Could not find latest NAV data. Cannot book portfolio.</p>"
 
-    cursor.execute('''
+    cur.execute('''
         CREATE TABLE IF NOT EXISTS virtual_portfolio (
             scheme_code TEXT PRIMARY KEY,
             name TEXT,
@@ -126,22 +128,22 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
             fund_nav, units, purchase_date
         ))
 
-    cursor.executemany("INSERT INTO virtual_portfolio VALUES (?, ?, ?, ?, ?, ?, ?)", portfolio_data)
-    conn.commit()
+    cur.executemany("INSERT INTO virtual_portfolio VALUES (?, ?, ?, ?, ?, ?, ?)", portfolio_data)
+    c.commit()
 
     portfolio_df = pd.DataFrame(portfolio_data, columns=['scheme_code', 'name', 'category', 'investment_amount', 'purchase_nav', 'units', 'purchase_date'])
     
     portfolio_output = "<h3>💰 Virtual Portfolio Created</h3><p>Your virtual portfolio has been successfully booked with an initial investment of ₹10,000.</p>"
     portfolio_output += portfolio_df[['name', 'category', 'investment_amount', 'units', 'purchase_date']].to_html(index=False)
-    
+    c.close()
     conn.close()
     return portfolio_output
 
 def track_portfolio(db_name="mf.db"):
-
+    c = sqlite3.connect("portfolio.db")
     conn = sqlite3.connect(db_name)
     try:
-        portfolio_df = pd.read_sql_query("SELECT * FROM virtual_portfolio", conn)
+        portfolio_df = pd.read_sql_query("SELECT * FROM virtual_portfolio", c)
         if portfolio_df.empty:
             return "<p>No virtual portfolio found. Please run the script to book one first.</p>"
 
@@ -175,6 +177,7 @@ def track_portfolio(db_name="mf.db"):
     except Exception as e:
         return f"An error occurred: {e}"
     finally:
+        c.close()
         conn.close()
 
 def generate_report_and_html():
@@ -312,10 +315,6 @@ def generate_report_and_html():
 
 if __name__ == "__main__":
     generate_report_and_html()
-
+    c = sqlite3.connect("portfolio.db")
     conn = sqlite3.connect("mf.db")
     cursor = conn.cursor()
-
-    cursor.execute("DROP TABLE IF EXISTS scheme_info")
-    cursor.execute("DROP TABLE IF EXISTS nav_history")
-    cursor.execute("DROP TABLE IF EXISTS fund_metrics")

@@ -12,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4 # Updated to v4 for better compatibility
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5 # Updated to v5
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
@@ -37,7 +37,7 @@ jobs:
         run: |
           git config --global user.name 'github-actions'
           git config --global user.email 'github-actions@github.com'
-          git add .
+          git add index.html portfolio.db
           git commit -m "Automated daily report update" || echo "No changes to commit"
           git push
 
@@ -53,18 +53,18 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4 # Updated to v4
+        uses: actions/checkout@v4
         with:
           ref: main
 
       - name: Setup Pages
-        uses: actions/configure-pages@v5 # Updated to v5
+        uses: actions/configure-pages@v5
 
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3 # Updated to the latest v3
+        uses: actions/upload-pages-artifact@v3
         with:
           path: './'
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4 # Updated to v4
+        uses: actions/deploy-pages@v4
