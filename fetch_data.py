@@ -2,7 +2,7 @@ import sqlite3
 from mftool import Mftool
 
 # Connect to the database
-conn = sqlite3.connect('mutual_funds.db')
+conn = sqlite3.connect('mf.db')
 cursor = conn.cursor()
 
 # Create tables
