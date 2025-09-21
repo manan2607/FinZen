@@ -25,8 +25,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run file1.py to populate database
-        run: python file1.py
+      - name: Run fetch_data.py to populate database
+        run: python fetch_data.py
 
       - name: Run file2.py to populate database
         run: python file2.py
