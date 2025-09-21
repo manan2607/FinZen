@@ -28,11 +28,11 @@ jobs:
       - name: Run fetch_data.py to populate database
         run: python fetch_data.py
 
-      - name: Run file2.py to populate database
-        run: python file2.py
+      - name: Run calculations.py to populate database
+        run: python calculations.py
 
-      - name: Run mf_manager.py to generate report and HTML
-        run: python mf_manager.py
+      - name: Run report.py to generate report and HTML
+        run: python report.py
     
       - name: Commit and push changes
         run: |
