@@ -37,7 +37,6 @@ prog = 0
 print("Starting data fetch for all mutual funds...")
 for scheme_code, scheme_name in list(all_schemes.items())[1:5]:
     try:
-
         prog +=1
         progress = prog / total
         bar_length = 50  # length of the progress bar
