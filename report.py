@@ -2,22 +2,16 @@ import sqlite3
 import pandas as pd
 from datetime import datetime
 
-# --- Functions from previous code ---
 
 def generate_final_report(db_name="mf.db"):
-    """
-    Loads advanced metrics, filters out risky funds, and generates a final report
-    based on a specific portfolio allocation.
-    """
+
     conn = sqlite3.connect(db_name)
     try:
         metrics_df = pd.read_sql_query("SELECT * FROM fund_metrics", conn)
         
         if metrics_df.empty:
-            # Correction: Return a tuple of two values, with the second being None
             return "<p>No metrics found in the database. Please run the analysis script first.</p>", None
 
-        # ... (rest of the code)
 
         filtered_df = metrics_df[
             (metrics_df['sharpe_ratio'] > 0.0) & 
@@ -27,7 +21,6 @@ def generate_final_report(db_name="mf.db"):
         ].copy()
 
         if filtered_df.empty:
-            # Correction: Return a tuple of two values, with the second being None
             return "<p>No funds meet the filtering criteria. Skipping final report.</p>", None
             
         filtered_df['final_score'] = (
@@ -77,16 +70,14 @@ def generate_final_report(db_name="mf.db"):
                 report_output += "<li>No suitable funds found for this category.</li>"
             report_output += "</ul>"
         
-        return report_output, recommended_funds # This is already correct
+        return report_output, recommended_funds 
     except Exception as e:
-        return f"An error occurred: {e}", None # This is already correct
+        return f"An error occurred: {e}", None 
     finally:
         conn.close()
 
-def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=10000):
-    """
-    Creates a virtual portfolio and returns a summary for HTML.
-    """
+def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
+
     if not recommended_funds:
         return "<p>No funds to book. Skipping portfolio creation.</p>"
 
@@ -147,9 +138,7 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=10000):
     return portfolio_output
 
 def track_portfolio(db_name="mf.db"):
-    """
-    Tracks the performance and returns the report as HTML.
-    """
+
     conn = sqlite3.connect(db_name)
     try:
         portfolio_df = pd.read_sql_query("SELECT * FROM virtual_portfolio", conn)
@@ -171,9 +160,9 @@ def track_portfolio(db_name="mf.db"):
         total_current_value = portfolio_with_nav['current_value'].sum()
         total_profit_loss = portfolio_with_nav['profit_loss'].sum()
         
-        profit_emoji = "🎉" if total_profit_loss >= 0 else "📉"
+        profit_emoji = "" if total_profit_loss >= 0 else ""
         
-        report_output = "<h3>📈 Portfolio Performance Report</h3>"
+        report_output = "<h3>Portfolio Performance Report</h3>"
         report_output += f"<p><strong>Total Investment:</strong> ₹{total_investment:,.2f}</p>"
         report_output += f"<p><strong>Current Value:</strong> ₹{total_current_value:,.2f}</p>"
         report_output += f"<p><strong>Profit/Loss:</strong> ₹{total_profit_loss:,.2f} {profit_emoji}</p>"
@@ -187,8 +176,6 @@ def track_portfolio(db_name="mf.db"):
         return f"An error occurred: {e}"
     finally:
         conn.close()
-
-# --- Main script logic to generate the HTML file ---
 
 def generate_report_and_html():
     recommendation_report, recommended_funds = generate_final_report()
@@ -325,3 +312,10 @@ def generate_report_and_html():
 
 if __name__ == "__main__":
     generate_report_and_html()
+
+    conn = sqlite3.connect("mf.db")
+    cursor = conn.cursor()
+
+    cursor.execute("DROP TABLE IF EXISTS scheme_info")
+    cursor.execute("DROP TABLE IF EXISTS nav_history")
+    cursor.execute("DROP TABLE IF EXISTS fund_metrics")
