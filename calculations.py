@@ -7,6 +7,7 @@ import warnings
 # Suppress all warnings for a cleaner output
 warnings.filterwarnings('ignore')
 
+
 # --- 1. Data Retrieval ---
 def fetch_all_fund_data(db_conn):
     """
