@@ -1,0 +1,7 @@
+mftool
+pandas
+scipy
+yfinance
+deprecated
+nsetools
+flask
