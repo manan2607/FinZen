@@ -35,7 +35,7 @@ scheme_info_data = []
 prog = 0
 # Iterate through all schemes and fetch data
 print("Starting data fetch for all mutual funds...")
-for scheme_code, scheme_name in list(all_schemes.items())[1:150]:
+for scheme_code, scheme_name in list(all_schemes.items())[1:]:
     try:
         prog +=1
         progress = prog / total
