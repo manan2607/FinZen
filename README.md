@@ -1,85 +1,112 @@
-FinZen: Mutual Fund Portfolio Tracker 📈
-FinZen is an automated mutual fund analysis and portfolio tracking tool. This project uses Python, Pandas, and SQLite to analyze Indian mutual fund data, recommend a diversified portfolio, and track its performance, with reports automatically published to GitHub Pages.
+### 📈 FinZen: Automated Mutual Fund Portfolio Tracker
 
-🚀 Features
-Daily Data Fetching: Retrieves the latest NAV data and other key metrics for mutual funds.
+A robust, open-source solution for analyzing mutual fund data, recommending a tailored portfolio, and tracking its performance. This project leverages Python, Pandas, and SQLite, with full automation via GitHub Actions to deliver regular reports to a GitHub Pages site.
 
-Performance Analysis: Calculates advanced metrics like Sharpe Ratio, Sortino Ratio, and Alpha to evaluate fund performance and risk.
 
-Portfolio Recommendation: Generates a final report with top fund recommendations based on a pre-defined asset allocation strategy.
 
-Virtual Portfolio Management: Books a virtual portfolio with a fixed investment amount and tracks its performance.
+<br>
 
-Automated Reporting: A GitHub Actions workflow runs the entire process twice a month, generating a clean, mobile-friendly HTML report.
+## ✨ Key Features
 
-🛠️ Technology Stack
-Python: The core language for all scripts.
+* **Intelligent Fund Analysis**: Evaluates funds based on key metrics like **Sharpe Ratio**, **Sortino Ratio**, and **Alpha** to identify top performers.
+* **Tailored Portfolio Allocation**: Recommends a diversified portfolio of funds based on a pre-defined asset allocation strategy.
+* **Performance Tracking**: Monitors the virtual portfolio's value, profit/loss, and overall performance against a baseline.
+* **Fully Automated Workflow**: A **GitHub Actions cron job** runs the entire process twice a month, ensuring the data and reports are always fresh.
+* **Clean, Modern Reports**: The final output is a mobile-friendly, dark-mode HTML page that is easy to read and hosted on **GitHub Pages**.
 
-Pandas: Used for data manipulation, analysis, and generating HTML tables.
+---
 
-SQLite: A lightweight, file-based database used to store mutual fund data and portfolio information.
+## ⚙️ How It Works
 
-GitHub Actions: Automates the entire process of data fetching, analysis, and deployment.
+The magic of FinZen lies in its automation. Here's a simple overview of the workflow:
 
-GitHub Pages: Hosts the static HTML report.
+1.  **Data Ingestion**: A GitHub Actions runner starts. Your `fetch_data.py` and `calculations.py` scripts execute, scraping mutual fund data and populating the `mf.db` and `portfolio.db` databases.
+2.  **Report Generation**: The `report.py` script takes over. It reads the fresh data from the databases, performs the portfolio recommendation and tracking calculations, and then generates the final `index.html` file.
+3.  **Deployment**: Git commits **only** the newly created `index.html` file to your repository. GitHub Pages then automatically publishes this static report, making it viewable online.
 
-📂 Project Structure
-fetch_data.py: Fetches raw mutual fund data from an external source and populates the mf.db database.
+**Note**: The large database files (`mf.db` and `portfolio.db`) are created and used only within the temporary environment of the GitHub Actions runner and are not committed to the repository, avoiding file size limits.
 
-calculations.py: Calculates performance metrics (Sharpe, Alpha, etc.) and updates the mf.db file.
+---
 
-report.py: The main script that reads data, generates the portfolio, tracks performance, and creates the index.html report.
+## 📂 Project Structure
+Markdown
 
-.github/workflows/daily_report_and_deploy.yml: The GitHub Actions workflow file that orchestrates the entire process.
+### 📈 FinZen: Automated Mutual Fund Portfolio Tracker
 
-mf.db: (Ignored by Git) The primary database storing fund information and NAV history. It is a temporary file created and used within the GitHub Actions workflow.
+A robust, open-source solution for analyzing mutual fund data, recommending a tailored portfolio, and tracking its performance. This project leverages Python, Pandas, and SQLite, with full automation via GitHub Actions to deliver regular reports to a GitHub Pages site.
 
-portfolio.db: (Ignored by Git) A separate database to persist the virtual portfolio details.
 
-requirements.txt: Lists all Python dependencies required for the project.
 
-index.html: The final, automatically generated report hosted on GitHub Pages.
+<br>
 
-⚙️ How It Works (Automation)
-The project is fully automated using GitHub Actions.
+## ✨ Key Features
 
-Trigger: The workflow runs on the 1st and 15th of every month. It can also be triggered manually from the "Actions" tab.
+* **Intelligent Fund Analysis**: Evaluates funds based on key metrics like **Sharpe Ratio**, **Sortino Ratio**, and **Alpha** to identify top performers.
+* **Tailored Portfolio Allocation**: Recommends a diversified portfolio of funds based on a pre-defined asset allocation strategy.
+* **Performance Tracking**: Monitors the virtual portfolio's value, profit/loss, and overall performance against a baseline.
+* **Fully Automated Workflow**: A **GitHub Actions cron job** runs the entire process twice a month, ensuring the data and reports are always fresh.
+* **Clean, Modern Reports**: The final output is a mobile-friendly, dark-mode HTML page that is easy to read and hosted on **GitHub Pages**.
 
-Execution: A virtual machine is provisioned, and the Python scripts are run in a sequence:
+---
 
-fetch_data.py populates the mf.db with the latest data.
+## ⚙️ How It Works
 
-calculations.py computes all required metrics.
+The magic of FinZen lies in its automation. Here's a simple overview of the workflow:
 
-report.py reads from mf.db and portfolio.db to generate the final index.html report.
+1.  **Data Ingestion**: A GitHub Actions runner starts. Your `fetch_data.py` and `calculations.py` scripts execute, scraping mutual fund data and populating the `mf.db` and `portfolio.db` databases.
+2.  **Report Generation**: The `report.py` script takes over. It reads the fresh data from the databases, performs the portfolio recommendation and tracking calculations, and then generates the final `index.html` file.
+3.  **Deployment**: Git commits **only** the newly created `index.html` file to your repository. GitHub Pages then automatically publishes this static report, making it viewable online.
 
-Deployment: The updated index.html file is committed to the main branch. GitHub Actions then automatically deploys this new file to the GitHub Pages site associated with the repository.
+**Note**: The large database files (`mf.db` and `portfolio.db`) are created and used only within the temporary environment of the GitHub Actions runner and are not committed to the repository, avoiding file size limits.
 
-➡️ Access the Live Report
-You can view the latest automated report here:
+---
 
-https://manan2607.github.io/FinZen/
+## 📂 Project Structure
 
-📝 Setup and Usage (Local)
-If you wish to run this project on your local machine, follow these steps:
+.
+├── .github/ <br>
+│   └── workflows/  <br>
+│       └── daily_report_and_deploy.yml   # The automation workflow <br>
+├── fetch_data.py                         # Fetches raw data <br>
+├── calculations.py                       # Calculates performance metrics <br>
+├── report.py                             # Generates the final report and HTML <br>
+├── requirements.txt                      # Python dependencies <br>
+├── .gitignore                            # Ignores local databases <br>
+└── index.html                            # The final report (auto-generated) <br>
 
-Clone the repository:
 
-Bash
 
-git clone https://github.com/manan2607/FinZen.git
-cd FinZen
-Create a virtual environment and install dependencies:
 
-Bash
+---
 
-python -m venv venv
-source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-pip install -r requirements.txt
-Run the scripts:
-First, populate your databases by running fetch_data.py and calculations.py (you'll need to create these files). Then, run the main report script:
+## 🚀 Getting Started (Local)
 
-Bash
+1.  **Clone the repository**:
+    ```bash
+    git clone [https://github.com/manan2607/FinZen.git](https://github.com/manan2607/FinZen.git)
+    cd FinZen
+    ```
 
-python report.py
-This will generate an index.html file in your project directory.
+2.  **Set up the Python environment**:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    ```
+
+3.  **Run the scripts in sequence**:
+    ```bash
+    python fetch_data.py
+    python calculations.py
+    python report.py
+    ```
+
+This will create `mf.db` and `portfolio.db` and generate the final `index.html` file in your local directory.
+
+---
+
+## 🔗 Live Report
+
+View the latest automatically generated report here:
+
+**https://manan2607.github.io/FinZen/**
