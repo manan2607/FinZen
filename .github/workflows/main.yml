@@ -1,4 +1,4 @@
-name: Daily Portfolio Update and Deploy
+name: Portfolio Update and Deploy
 
 on:
   push:
@@ -13,6 +13,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Clean up old files
+        run: |
+          rm -f index.html
 
       - name: Set up Python
         uses: actions/setup-python@v5
