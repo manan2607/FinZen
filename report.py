@@ -92,7 +92,7 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
     )
     if latest_navs.empty:
         return "<p>Could not find latest NAV data. Cannot book portfolio.</p>"
-
+ 
     cur.execute('''
         CREATE TABLE IF NOT EXISTS virtual_portfolio (
             scheme_code TEXT,
