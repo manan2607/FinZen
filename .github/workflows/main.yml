@@ -14,10 +14,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Clean up old files
-        run: |
-          rm -f index.html
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -36,6 +32,15 @@ jobs:
 
       - name: Run report.py to generate report and HTML
         run: python report.py
+      
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+          git add index.html portfolio.db # Add only the files you want to save
+          # Use --force-with-lease to resolve the 'rejected' error
+          git commit -m "Automated daily report update" || echo "No changes to commit"
+          git push --force-with-lease
     
       - name: Commit and push changes
         run: |
