@@ -95,7 +95,7 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
 
     cur.execute('''
         CREATE TABLE IF NOT EXISTS virtual_portfolio (
-            scheme_code TEXT PRIMARY KEY,
+            scheme_code TEXT,
             name TEXT,
             category TEXT,
             investment_amount REAL,

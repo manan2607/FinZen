@@ -41,14 +41,6 @@ jobs:
           # Use --force-with-lease to resolve the 'rejected' error
           git commit -m "Automated daily report update" || echo "No changes to commit"
           git push --force-with-lease
-    
-      - name: Commit and push changes
-        run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
-          git add index.html portfolio.db
-          git commit -m "Automated daily report update" || echo "No changes to commit"
-          git push
 
   deploy-to-github-pages:
     needs: update-data-and-generate-report
