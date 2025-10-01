@@ -1,0 +1,202 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mutual Fund Report</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                background-color: #121212;
+                color: #e0e0e0;
+                line-height: 1.6;
+                margin: 0;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .container {
+                max-width: 800px;
+                width: 100%;
+                background-color: #1e1e1e;
+                padding: 20px;
+                border-radius: 12px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            }
+            h1, h2, h3, h4 {
+                color: #f0f0f0;
+                border-bottom: 2px solid #333;
+                padding-bottom: 8px;
+            }
+            h1 { font-size: 2em; text-align: center; }
+            h2 { font-size: 1.5em; }
+            h3 { font-size: 1.2em; }
+            ul { list-style-type: none; padding: 0; }
+            li {
+                background-color: #2a2a2a;
+                margin-bottom: 10px;
+                padding: 15px;
+                border-radius: 8px;
+                border-left: 4px solid #007bff;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+                background-color: #2a2a2a;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            th, td {
+                padding: 12px 15px;
+                text-align: left;
+                border-bottom: 1px solid #333;
+            }
+            th {
+                background-color: #333;
+                color: #fff;
+                font-weight: bold;
+            }
+            tr:nth-child(even) {
+                background-color: #222;
+            }
+            tr:hover {
+                background-color: #383838;
+            }
+            .footer {
+                text-align: center;
+                margin-top: 30px;
+                font-size: 0.8em;
+                color: #888;
+            }
+
+            /* Responsive adjustments */
+            @media (max-width: 600px) {
+                body { padding: 10px; }
+                .container { padding: 15px; }
+                table, thead, tbody, th, td, tr {
+                    display: block;
+                }
+                thead tr {
+                    position: absolute;
+                    top: -9999px;
+                    left: -9999px;
+                }
+                tr { margin-bottom: 15px; background-color: #2a2a2a; border-radius: 8px; border: 1px solid #333; }
+                td {
+                    border: none;
+                    border-bottom: 1px solid #444;
+                    position: relative;
+                    padding-left: 50%;
+                    text-align: right;
+                }
+                td:before {
+                    content: attr(data-label);
+                    position: absolute;
+                    left: 0;
+                    width: 50%;
+                    padding-left: 15px;
+                    font-weight: bold;
+                    text-align: left;
+                    color: #999;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>FinZen: Mutual Fund Report</h1>
+            <p>Generated on: 2025-10-01 11:58:11</p>
+            <h3>Mutual Fund Recommendations</h3><p>This report provides top-rated funds based on your criteria.</p><h4>Mid & Small-cap (25% Allocation)</h4><ul><li>No suitable funds found for this category.</li></ul><h4>Large-cap (30% Allocation)</h4><ul><li>No suitable funds found for this category.</li></ul><h4>International Equity (20% Allocation)</h4><ul><li>No suitable funds found for this category.</li></ul><h4>Debt Mutual Funds (10% Allocation)</h4><ul>
+                        <li>
+                            <strong>Aditya Birla Sun Life Banking & PSU Debt Fund - Regular Plan-Growth</strong><br>
+                            <small>
+                                Sharpe: 0.33 | 
+                                Sortino: 4.67 | 
+                                Alpha: 13.71%
+                            </small>
+                        </li>
+                    
+                        <li>
+                            <strong>Aditya Birla Sun Life Banking & PSU Debt Fund - Retail Plan-Growth</strong><br>
+                            <small>
+                                Sharpe: 0.34 | 
+                                Sortino: 4.72 | 
+                                Alpha: 12.74%
+                            </small>
+                        </li>
+                    
+                        <li>
+                            <strong>Axis Banking & PSU Debt Fund - Direct Plan - Bonus Option</strong><br>
+                            <small>
+                                Sharpe: 3.35 | 
+                                Sortino: 7.59 | 
+                                Alpha: 0.40%
+                            </small>
+                        </li>
+                    </ul><h4>Gold (10% Allocation)</h4><ul><li>No suitable funds found for this category.</li></ul>
+            <hr>
+            <h3>💰 Virtual Portfolio Created</h3><p>Your virtual portfolio has been successfully booked with an initial investment of ₹10,000.</p><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>name</th>
+      <th>category</th>
+      <th>investment_amount</th>
+      <th>units</th>
+      <th>purchase_date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Aditya Birla Sun Life Banking &amp; PSU Debt Fund - Regular Plan-Growth</td>
+      <td>Debt Mutual Funds</td>
+      <td>500.0</td>
+      <td>1.425005</td>
+      <td>31-12-2024</td>
+    </tr>
+    <tr>
+      <td>Aditya Birla Sun Life Banking &amp; PSU Debt Fund - Retail Plan-Growth</td>
+      <td>Debt Mutual Funds</td>
+      <td>500.0</td>
+      <td>0.949286</td>
+      <td>31-12-2024</td>
+    </tr>
+  </tbody>
+</table>
+            <hr>
+            <h3>Portfolio Performance Report</h3><p><strong>Total Investment:</strong> ₹1,000.00</p><p><strong>Current Value:</strong> ₹1,000.00</p><p><strong>Profit/Loss:</strong> ₹0.00 </p><h4>Breakdown by Fund</h4><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>name</th>
+      <th>category</th>
+      <th>investment_amount</th>
+      <th>current_value</th>
+      <th>profit_loss</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Aditya Birla Sun Life Banking &amp; PSU Debt Fund - Regular Plan-Growth</td>
+      <td>Debt Mutual Funds</td>
+      <td>500.00</td>
+      <td>500.00</td>
+      <td>0.00</td>
+    </tr>
+    <tr>
+      <td>Aditya Birla Sun Life Banking &amp; PSU Debt Fund - Retail Plan-Growth</td>
+      <td>Debt Mutual Funds</td>
+      <td>500.00</td>
+      <td>500.00</td>
+      <td>0.00</td>
+    </tr>
+  </tbody>
+</table>
+        </div>
+        <div class="footer">
+            <p>Powered by Python, Pandas, and GitHub Actions</p>
+        </div>
+    </body>
+    </html>
+    
