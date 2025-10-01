@@ -62,9 +62,9 @@ try:
         all_schemes = mf.get_scheme_codes()
         scheme_info_data = []
 
-        print(f"Starting data fetch for the first {min(len(all_schemes), 150)} mutual funds...")
+        print(f"Starting data fetch for the first {max(len(all_schemes), 150)} mutual funds...")
         
-        schemes_to_process = list(all_schemes.items())[1:150]
+        schemes_to_process = list(all_schemes.items())[1:]
 
         for scheme_code, scheme_name in schemes_to_process:
             try:
