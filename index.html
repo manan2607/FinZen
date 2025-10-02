@@ -72,35 +72,42 @@
                 color: #888;
             }
 
-            /* Responsive adjustments */
+            /* 1 - Mobile Table Fix: Changed CSS to make the table scrollable instead of collapsing */
             @media (max-width: 600px) {
                 body { padding: 10px; }
                 .container { padding: 15px; }
-                table, thead, tbody, th, td, tr {
-                    display: block;
+                
+                /* Create a scrollable container for the table */
+                .portfolio-table-container {
+                    width: 100%;
+                    overflow-x: auto;
                 }
+                
+                /* Remove the previous block-level display rules that hid the table */
+                table, th, td, tr {
+                    display: table; /* Reset to standard table display */
+                }
+                
+                /* Ensure the table is visible and its elements are rendered normally */
+                table {
+                    min-width: 600px; /* Ensure table is wider than the viewport to allow scrolling */
+                }
+                
+                /* Remove mobile-specific list-like formatting */
                 thead tr {
-                    position: absolute;
-                    top: -9999px;
-                    left: -9999px;
+                    position: static;
+                    top: auto;
+                    left: auto;
                 }
-                tr { margin-bottom: 15px; background-color: #2a2a2a; border-radius: 8px; border: 1px solid #333; }
+                
                 td {
-                    border: none;
-                    border-bottom: 1px solid #444;
-                    position: relative;
-                    padding-left: 50%;
-                    text-align: right;
-                }
-                td:before {
-                    content: attr(data-label);
-                    position: absolute;
-                    left: 0;
-                    width: 50%;
                     padding-left: 15px;
-                    font-weight: bold;
                     text-align: left;
-                    color: #999;
+                }
+                
+                /* Hide the data-label content */
+                td:before {
+                    content: none !important;
                 }
             }
         </style>
@@ -109,79 +116,12 @@
         <div class="container">
             <h1>FinZen: Mutual Fund Report</h1>
             <p>Generated on: 02-10-2025</p>
-            <h3>Mutual Fund Recommendations</h3><h4>Mid & Small-cap (25% Allocation)</h4><ul><li>No suitable funds found for this category.</li></ul><h4>Large-cap (30% Allocation)</h4><ul><li>No suitable funds found for this category.</li></ul><h4>International Equity (20% Allocation)</h4><ul><li>No suitable funds found for this category.</li></ul><h4>Debt Mutual Funds (10% Allocation)</h4><ul>
-                        <li>
-                            <strong>Aditya Birla Sun Life Banking & PSU Debt Fund - Regular Plan-Growth</strong><br>
-                            <small>
-                                Sharpe: 0.33 | 
-                                Sortino: 4.67 | 
-                                Alpha: 13.72%
-                            </small>
-                        </li>
-                    
-                        <li>
-                            <strong>Aditya Birla Sun Life Banking & PSU Debt Fund - Retail Plan-Growth</strong><br>
-                            <small>
-                                Sharpe: 0.34 | 
-                                Sortino: 4.72 | 
-                                Alpha: 12.75%
-                            </small>
-                        </li>
-                    
-                        <li>
-                            <strong>Axis Banking & PSU Debt Fund - Direct Plan - Bonus Option</strong><br>
-                            <small>
-                                Sharpe: 3.35 | 
-                                Sortino: 7.59 | 
-                                Alpha: 0.40%
-                            </small>
-                        </li>
-                    </ul><h4>Gold (10% Allocation)</h4><ul><li>No suitable funds found for this category.</li></ul>
+            <p>No funds meet the filtering criteria. Skipping final report.</p>
             <hr>
-            <h3>Portfolio Performance Report</h3><p><strong>Total Investment:</strong> ₹2,000.00</p><p><strong>Current Value:</strong> ₹2,000.00</p><p><strong>Profit/Loss:</strong> ₹0.00 </p><h4>Breakdown by Fund</h4><table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th>name</th>
-      <th>category</th>
-      <th>investment_amount</th>
-      <th>current_value</th>
-      <th>profit_loss</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Aditya Birla Sun Life Banking &amp; PSU Debt Fund - Regular Plan-Growth</td>
-      <td>Debt Mutual Funds</td>
-      <td>500.00</td>
-      <td>500.00</td>
-      <td>0.00</td>
-    </tr>
-    <tr>
-      <td>Aditya Birla Sun Life Banking &amp; PSU Debt Fund - Retail Plan-Growth</td>
-      <td>Debt Mutual Funds</td>
-      <td>500.00</td>
-      <td>500.00</td>
-      <td>0.00</td>
-    </tr>
-    <tr>
-      <td>Aditya Birla Sun Life Banking &amp; PSU Debt Fund - Regular Plan-Growth</td>
-      <td>Debt Mutual Funds</td>
-      <td>500.00</td>
-      <td>500.00</td>
-      <td>0.00</td>
-    </tr>
-    <tr>
-      <td>Aditya Birla Sun Life Banking &amp; PSU Debt Fund - Retail Plan-Growth</td>
-      <td>Debt Mutual Funds</td>
-      <td>500.00</td>
-      <td>500.00</td>
-      <td>0.00</td>
-    </tr>
-  </tbody>
-</table>
-        </div>
-        <div class="footer">
-            <p>Powered by Python, Pandas, and GitHub Actions</p>
+            <h2>Portfolio Status</h2>
+            <div class="portfolio-table-container">
+            An error occurred: replace() argument 2 must be str, not function
+            </div>
         </div>
     </body>
     </html>
