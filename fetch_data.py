@@ -1,14 +1,15 @@
 import sqlite3
+import pandas as pd
 from mftool import Mftool
 import time
 import requests.exceptions
+from datetime import datetime 
+
 
 MAX_RETRIES = 3
 RETRY_DELAY_SECONDS = 10
 
-
 def initialize_mftool_with_retry(max_retries, delay):
-    """Initializes Mftool with retry logic for network timeouts."""
     for attempt in range(max_retries):
         try:
             print(f"Attempting to initialize Mftool (data fetch) - Attempt {attempt + 1}/{max_retries}...")
@@ -27,6 +28,20 @@ def initialize_mftool_with_retry(max_retries, delay):
             time.sleep(delay)
     return None
 
+con = sqlite3.connect('portfolio.db')
+
+try:
+    sch = pd.read_sql_query(
+        'SELECT scheme_code FROM virtual_portfolio',
+        con
+    )
+    scheme_code_list = sch['scheme_code'].tolist()
+    print(f"Portfolio scheme codes found: {scheme_code_list}")
+except pd.io.sql.DatabaseError:
+    print("WARNING: virtual_portfolio table not found. Assuming empty list of codes.")
+    scheme_code_list = []
+finally:
+    con.close() 
 
 conn = sqlite3.connect('mf.db')
 cursor = conn.cursor()
@@ -47,26 +62,24 @@ cursor.execute('''
         scheme_code TEXT,
         nav_date TEXT,
         nav REAL,
-        PRIMARY KEY (scheme_code, nav_date),
-        FOREIGN KEY (scheme_code) REFERENCES scheme_info(scheme_code)
+        PRIMARY KEY (scheme_code, nav_date)
     )
 ''')
 conn.commit()
 
 
-try:
-    mf = initialize_mftool_with_retry(MAX_RETRIES, RETRY_DELAY_SECONDS)
+scheme_info_data = []
+mf = initialize_mftool_with_retry(MAX_RETRIES, RETRY_DELAY_SECONDS)
 
-    if mf:
-        print("Fetching all mutual fund scheme codes...")
-        all_schemes = mf.get_scheme_codes()
-        scheme_info_data = []
-
-        print(f"Starting data fetch for the first {max(len(all_schemes), 150)} mutual funds...")
+if mf and scheme_code_list:
+    try:
+        all_schemes_map = mf.get_scheme_codes() 
         
-        schemes_to_process = list(all_schemes.items())[1:]
+        print(f"Starting data fetch for {len(scheme_code_list)} portfolio mutual funds...")
 
-        for scheme_code, scheme_name in schemes_to_process:
+        for scheme_code in scheme_code_list:
+            scheme_name = all_schemes_map.get(scheme_code, f"Code {scheme_code}") 
+
             try:
                 details = mf.get_scheme_details(scheme_code)
                 scheme_info_data.append((
@@ -79,22 +92,27 @@ try:
                 historical_navs = mf.get_scheme_historical_nav(scheme_code)['data']
                 
                 if isinstance(historical_navs, list) and historical_navs:
-                    nav_records = [(scheme_code, record['date'], float(record['nav'])) for record in historical_navs]
+                    nav_records = []
+                    for record in historical_navs:
+                         date_obj = datetime.strptime(record['date'], '%d-%m-%Y') 
+                         formatted_date = date_obj.strftime('%Y-%m-%d')
+                         
+                         nav_records.append((scheme_code, formatted_date, float(record['nav'])))
+
                     cursor.executemany("INSERT OR IGNORE INTO nav_history VALUES (?, ?, ?)", nav_records)
                 else:
                     print(f"Skipping scheme {scheme_name} - no valid historical data.")
                 
             except Exception as e:
                 print(f"Skipping scheme {scheme_name} due to an error: {type(e).__name__} - {e}")
-                
-        cursor.executemany("INSERT OR IGNORE INTO scheme_info VALUES (?, ?, ?, ?)", scheme_info_data)
+        
+        cursor.executemany("INSERT OR REPLACE INTO scheme_info VALUES (?, ?, ?, ?)", scheme_info_data)
         conn.commit()
         print("Data fetching and storage complete.")
-    else:
-        print("Mftool initialization failed after all retries. Workflow will now fail.")
 
-except Exception as final_e:
-    print(f"A critical error occurred during the main data fetch: {final_e}")
-    
-finally:
-    conn.close()
+    except Exception as final_e:
+        print(f"A critical error occurred during the main data fetch: {final_e}")
+else:
+    print("Mftool failed to initialize or scheme list is empty. Skipping data population.")
+
+conn.close()
