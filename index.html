@@ -72,40 +72,35 @@
                 color: #888;
             }
 
-            /* 1 - Mobile Table Fix: Changed CSS to make the table scrollable instead of collapsing */
+            /* Responsive adjustments */
             @media (max-width: 600px) {
                 body { padding: 10px; }
                 .container { padding: 15px; }
-                
-                /* Create a scrollable container for the table */
-                .portfolio-table-container {
-                    width: 100%;
-                    overflow-x: auto;
+                table, thead, tbody, th, td, tr {
+                    display: block;
                 }
-                
-                /* Reset table display to standard for scrolling */
-                table, th, td, tr {
-                    display: table; 
-                }
-                
-                table {
-                    min-width: 600px; /* Ensures table is wider than the viewport */
-                }
-                
                 thead tr {
-                    position: static;
-                    top: auto;
-                    left: auto;
+                    position: absolute;
+                    top: -9999px;
+                    left: -9999px;
                 }
-                
+                tr { margin-bottom: 15px; background-color: #2a2a2a; border-radius: 8px; border: 1px solid #333; }
                 td {
-                    padding-left: 15px;
-                    text-align: left;
+                    border: none;
+                    border-bottom: 1px solid #444;
+                    position: relative;
+                    padding-left: 50%;
+                    text-align: right;
                 }
-                
-                /* Hide the data-label content, as we are not using the card view */
                 td:before {
-                    content: none !important;
+                    content: attr(data-label);
+                    position: absolute;
+                    left: 0;
+                    width: 50%;
+                    padding-left: 15px;
+                    font-weight: bold;
+                    text-align: left;
+                    color: #999;
                 }
             }
         </style>
@@ -143,45 +138,64 @@
                         </li>
                     </ul><h4>Gold (10% Allocation)</h4><ul><li>No suitable funds found for this category.</li></ul>
             <hr>
-            <h2>Portfolio Status</h2>
-            <div class="portfolio-table-container">
-            <h3>Portfolio Performance Report</h3><p><strong>Total Investment:</strong> ₹3,000.00</p><p><strong>Current Value:</strong> ₹0.00</p><p><strong>Profit/Loss:</strong> ₹0.00 📈</p><h4>Breakdown by Fund</h4><table border="1" class="dataframe portfolio-table">
+            <h3>Portfolio Performance Report</h3><p><strong>Total Investment:</strong> ₹3,000.00</p><p><strong>Current Value:</strong> ₹0.00</p><p><strong>Profit/Loss:</strong> ₹0.00 </p><h4>Breakdown by Fund</h4><table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
       <th>name</th>
       <th>category</th>
-      <th>Investment</th>
-      <th>Avg. Purchase NAV</th>
-      <th>Current NAV</th>
-      <th>Current Value</th>
-      <th>P/L</th>
+      <th>investment_amount</th>
+      <th>current_value</th>
+      <th>profit_loss</th>
     </tr>
   </thead>
   <tbody>
     <tr>
+      <td>Aditya Birla Sun Life Banking &amp; PSU Debt Fund - Regular Plan-Growth</td>
+      <td>Debt Mutual Funds</td>
+      <td>500.00</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
       <td>Aditya Birla Sun Life Banking &amp; PSU Debt Fund - Retail Plan-Growth</td>
       <td>Debt Mutual Funds</td>
-      <td>1500.00</td>
-      <td>526.71</td>
-      <td>NaN</td>
+      <td>500.00</td>
       <td>NaN</td>
       <td>NaN</td>
     </tr>
     <tr>
       <td>Aditya Birla Sun Life Banking &amp; PSU Debt Fund - Regular Plan-Growth</td>
       <td>Debt Mutual Funds</td>
-      <td>1500.00</td>
-      <td>350.88</td>
+      <td>500.00</td>
       <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <td>Aditya Birla Sun Life Banking &amp; PSU Debt Fund - Retail Plan-Growth</td>
+      <td>Debt Mutual Funds</td>
+      <td>500.00</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <td>Aditya Birla Sun Life Banking &amp; PSU Debt Fund - Regular Plan-Growth</td>
+      <td>Debt Mutual Funds</td>
+      <td>500.00</td>
+      <td>NaN</td>
+      <td>NaN</td>
+    </tr>
+    <tr>
+      <td>Aditya Birla Sun Life Banking &amp; PSU Debt Fund - Retail Plan-Growth</td>
+      <td>Debt Mutual Funds</td>
+      <td>500.00</td>
       <td>NaN</td>
       <td>NaN</td>
     </tr>
   </tbody>
 </table>
-            </div>
         </div>
         <div class="footer">
-            <p><strong>Note:</strong> Portfolio tracking uses a weighted average cost basis for profit/loss calculation.</p>
+            <p>Powered by Python, Pandas, and GitHub Actions</p>
         </div>
     </body>
     </html>
