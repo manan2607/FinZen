@@ -15,7 +15,7 @@ def fetch_all_fund_data(db_conn):
     ORDER BY s.scheme_code, h.nav_date ASC
     """
     df = pd.read_sql_query(query, db_conn)
-    df['nav_date'] = pd.to_datetime(df['nav_date'], format='%Y-%m-%d') 
+    df['nav_date'] = pd.to_datetime(df['nav_date'], format='mixed', dayfirst=True)
     return df
 
 def fetch_benchmark_data(ticker, start_date, end_date):
