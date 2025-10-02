@@ -94,7 +94,7 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
     if latest_navs.empty:
         return "<p>Could not find latest NAV data. Cannot book portfolio.</p>"
  
-    # The portfolio table will now track individual purchase transactions to calculate the weighted average cost basis later.
+    # The portfolio table now tracks individual purchase transactions for weighted average cost basis
     cur.execute('''
         CREATE TABLE IF NOT EXISTS virtual_portfolio (
             scheme_code TEXT,
@@ -117,8 +117,6 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
         fund_nav = fund_nav_row['nav'].iloc[0]
         
         category_investment = investment_amount * fund['percentage']
-        # This logic is flawed for a single fund booking, but preserved to match the original function's intent
-        # of proportional investment across top funds within a category.
         funds_in_category_count = len([f for f in recommended_funds if f['category'] == fund['category']])
         fund_investment = category_investment / funds_in_category_count if funds_in_category_count > 0 else 0
         
@@ -159,8 +157,7 @@ def track_portfolio(db_name="mf.db"):
             category=('category', 'first')
         ).reset_index()
 
-        # Calculate weighted average purchase NAV (Investment / Units)
-        # Check to prevent division by zero in case of an error state
+        # Calculate weighted average purchase NAV (Investment / Units). Handle division by zero.
         portfolio_grouped['avg_purchase_nav'] = portfolio_grouped.apply(
             lambda row: row['total_investment'] / row['total_units'] if row['total_units'] > 0 else 0,
             axis=1
@@ -208,7 +205,7 @@ def track_portfolio(db_name="mf.db"):
         # Generate the HTML table. The mobile-friendly CSS added previously handles the display.
         html_table = report_df.to_html(index=False, float_format="%.2f", classes='portfolio-table')
         
-        # --- FIX: Removed the buggy replace() call and the unnecessary manual replacements ---
+        # FIX APPLIED: Only append the generated table HTML, removing the faulty replace() logic.
         report_output += html_table 
         
         return report_output
@@ -218,13 +215,13 @@ def track_portfolio(db_name="mf.db"):
         c.close()
         conn.close()
 
-
 def generate_report_and_html():
     recommendation_report, recommended_funds = generate_final_report()
-    book_portfolio(recommended_funds)
+    portfolio_booking_report = book_portfolio(recommended_funds)
     portfolio_tracking_report = track_portfolio()
     
     # --- Mobile Table Fix (CSS) ---
+    # The CSS is key for solving the mobile table disappearance. It forces scrolling instead of collapsing.
     full_html = f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -310,17 +307,15 @@ def generate_report_and_html():
                     overflow-x: auto;
                 }}
                 
-                /* Remove the previous block-level display rules that hid the table */
+                /* Reset table display to standard for scrolling */
                 table, th, td, tr {{
-                    display: table; /* Reset to standard table display */
+                    display: table; 
                 }}
                 
-                /* Ensure the table is visible and its elements are rendered normally */
                 table {{
-                    min-width: 600px; /* Ensure table is wider than the viewport to allow scrolling */
+                    min-width: 600px; /* Ensures table is wider than the viewport */
                 }}
                 
-                /* Remove mobile-specific list-like formatting */
                 thead tr {{
                     position: static;
                     top: auto;
@@ -332,7 +327,7 @@ def generate_report_and_html():
                     text-align: left;
                 }}
                 
-                /* Hide the data-label content */
+                /* Hide the data-label content, as we are not using the card view */
                 td:before {{
                     content: none !important;
                 }}
@@ -350,6 +345,9 @@ def generate_report_and_html():
             {portfolio_tracking_report}
             </div>
         </div>
+        <div class="footer">
+            <p><strong>Note:</strong> Portfolio tracking uses a weighted average cost basis for profit/loss calculation.</p>
+        </div>
     </body>
     </html>
     """
@@ -361,3 +359,6 @@ def generate_report_and_html():
 
 if __name__ == "__main__":
     generate_report_and_html()
+    c = sqlite3.connect("portfolio.db")
+    conn = sqlite3.connect("mf.db")
+    cursor = conn.cursor()
