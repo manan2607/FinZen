@@ -80,10 +80,8 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
     if not recommended_funds:
         return "<p>No funds to book. Skipping portfolio creation.</p>"
     
-    # Using 'portfolio.db' for virtual portfolio
     c = sqlite3.connect("portfolio.db")
     cur = c.cursor()
-    # Using 'mf.db' for NAV data
     conn = sqlite3.connect(db_name)
     cursor = conn.cursor()
 
@@ -94,7 +92,6 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
     if latest_navs.empty:
         return "<p>Could not find latest NAV data. Cannot book portfolio.</p>"
  
-    # The portfolio table now tracks individual purchase transactions for weighted average cost basis
     cur.execute('''
         CREATE TABLE IF NOT EXISTS virtual_portfolio (
             scheme_code TEXT,
@@ -117,20 +114,18 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
         fund_nav = fund_nav_row['nav'].iloc[0]
         
         category_investment = investment_amount * fund['percentage']
-        funds_in_category_count = len([f for f in recommended_funds if f['category'] == fund['category']])
-        fund_investment = category_investment / funds_in_category_count if funds_in_category_count > 0 else 0
+        num_funds_in_category = len([f for f in recommended_funds if f['category'] == fund['category']])
+        fund_investment = category_investment / num_funds_in_category if num_funds_in_category > 0 else 0
         
         if fund_nav > 0:
             units = fund_investment / fund_nav
         else:
             units = 0
 
-        # Only insert if there's an actual investment
-        if fund_investment > 0 and units > 0:
-            portfolio_data.append((
-                fund['scheme_code'], fund['name'], fund['category'], fund_investment,
-                fund_nav, units, purchase_date
-            ))
+        portfolio_data.append((
+            fund['scheme_code'], fund['name'], fund['category'], fund_investment,
+            fund_nav, units, purchase_date
+        ))
 
     cur.executemany("INSERT INTO virtual_portfolio VALUES (?, ?, ?, ?, ?, ?, ?)", portfolio_data)
     c.commit()
@@ -139,31 +134,12 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
     return 1
 
 def track_portfolio(db_name="mf.db"):
-    # Using 'portfolio.db' for virtual portfolio
     c = sqlite3.connect("portfolio.db")
-    # Using 'mf.db' for NAV data
     conn = sqlite3.connect(db_name)
     try:
         portfolio_df = pd.read_sql_query("SELECT * FROM virtual_portfolio", c)
         if portfolio_df.empty:
             return "<p>No virtual portfolio found. Please run the script to book one first.</p>"
-
-        # --- Weighted Average Cost Basis Calculation ---
-        # Group by scheme_code to aggregate multiple purchases
-        portfolio_grouped = portfolio_df.groupby('scheme_code').agg(
-            total_investment=('investment_amount', 'sum'),
-            total_units=('units', 'sum'),
-            name=('name', 'first'),
-            category=('category', 'first')
-        ).reset_index()
-
-        # Calculate weighted average purchase NAV (Investment / Units). Handle division by zero.
-        portfolio_grouped['avg_purchase_nav'] = portfolio_grouped.apply(
-            lambda row: row['total_investment'] / row['total_units'] if row['total_units'] > 0 else 0,
-            axis=1
-        )
-        # --- End Weighted Average Cost Basis Calculation ---
-
 
         latest_navs_df = pd.read_sql_query(
             "SELECT scheme_code, nav FROM nav_history WHERE nav_date = (SELECT MAX(nav_date) FROM nav_history)",
@@ -172,18 +148,15 @@ def track_portfolio(db_name="mf.db"):
         if latest_navs_df.empty:
             return "<p>Could not find latest NAV data. Cannot track portfolio.</p>"
 
-        portfolio_with_nav = pd.merge(portfolio_grouped, latest_navs_df, on='scheme_code', how='left')
+        portfolio_with_nav = pd.merge(portfolio_df, latest_navs_df, on='scheme_code', how='left')
+        portfolio_with_nav['current_value'] = portfolio_with_nav['units'] * portfolio_with_nav['nav']
+        portfolio_with_nav['profit_loss'] = portfolio_with_nav['current_value'] - portfolio_with_nav['investment_amount']
         
-        # Current NAV is 'nav', current value is based on total units and current NAV
-        portfolio_with_nav['current_value'] = portfolio_with_nav['total_units'] * portfolio_with_nav['nav']
-        # Profit/Loss is Current Value - Total Investment
-        portfolio_with_nav['profit_loss'] = portfolio_with_nav['current_value'] - portfolio_with_nav['total_investment']
-        
-        total_investment = portfolio_with_nav['total_investment'].sum()
+        total_investment = portfolio_with_nav['investment_amount'].sum()
         total_current_value = portfolio_with_nav['current_value'].sum()
         total_profit_loss = portfolio_with_nav['profit_loss'].sum()
         
-        profit_emoji = "📈" if total_profit_loss >= 0 else "📉"
+        profit_emoji = "" if total_profit_loss >= 0 else ""
         
         report_output = "<h3>Portfolio Performance Report</h3>"
         report_output += f"<p><strong>Total Investment:</strong> ₹{total_investment:,.2f}</p>"
@@ -191,22 +164,8 @@ def track_portfolio(db_name="mf.db"):
         report_output += f"<p><strong>Profit/Loss:</strong> ₹{total_profit_loss:,.2f} {profit_emoji}</p>"
         
         report_output += "<h4>Breakdown by Fund</h4>"
-        # Renaming columns for clearer report display
-        report_df = portfolio_with_nav[['name', 'category', 'total_investment', 'avg_purchase_nav', 'nav', 'current_value', 'profit_loss']].rename(
-            columns={
-                'total_investment': 'Investment',
-                'avg_purchase_nav': 'Avg. Purchase NAV',
-                'nav': 'Current NAV',
-                'current_value': 'Current Value',
-                'profit_loss': 'P/L'
-            }
-        )
-        
-        # Generate the HTML table. The mobile-friendly CSS added previously handles the display.
-        html_table = report_df.to_html(index=False, float_format="%.2f", classes='portfolio-table')
-        
-        # FIX APPLIED: Only append the generated table HTML, removing the faulty replace() logic.
-        report_output += html_table 
+        report_df = portfolio_with_nav[['name', 'category', 'investment_amount', 'current_value', 'profit_loss']]
+        report_output += report_df.to_html(index=False, float_format="%.2f")
         
         return report_output
     except Exception as e:
@@ -220,8 +179,6 @@ def generate_report_and_html():
     portfolio_booking_report = book_portfolio(recommended_funds)
     portfolio_tracking_report = track_portfolio()
     
-    # --- Mobile Table Fix (CSS) ---
-    # The CSS is key for solving the mobile table disappearance. It forces scrolling instead of collapsing.
     full_html = f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -296,40 +253,35 @@ def generate_report_and_html():
                 color: #888;
             }}
 
-            /* 1 - Mobile Table Fix: Changed CSS to make the table scrollable instead of collapsing */
+            /* Responsive adjustments */
             @media (max-width: 600px) {{
                 body {{ padding: 10px; }}
                 .container {{ padding: 15px; }}
-                
-                /* Create a scrollable container for the table */
-                .portfolio-table-container {{
-                    width: 100%;
-                    overflow-x: auto;
+                table, thead, tbody, th, td, tr {{
+                    display: block;
                 }}
-                
-                /* Reset table display to standard for scrolling */
-                table, th, td, tr {{
-                    display: table; 
-                }}
-                
-                table {{
-                    min-width: 600px; /* Ensures table is wider than the viewport */
-                }}
-                
                 thead tr {{
-                    position: static;
-                    top: auto;
-                    left: auto;
+                    position: absolute;
+                    top: -9999px;
+                    left: -9999px;
                 }}
-                
+                tr {{ margin-bottom: 15px; background-color: #2a2a2a; border-radius: 8px; border: 1px solid #333; }}
                 td {{
-                    padding-left: 15px;
-                    text-align: left;
+                    border: none;
+                    border-bottom: 1px solid #444;
+                    position: relative;
+                    padding-left: 50%;
+                    text-align: right;
                 }}
-                
-                /* Hide the data-label content, as we are not using the card view */
                 td:before {{
-                    content: none !important;
+                    content: attr(data-label);
+                    position: absolute;
+                    left: 0;
+                    width: 50%;
+                    padding-left: 15px;
+                    font-weight: bold;
+                    text-align: left;
+                    color: #999;
                 }}
             }}
         </style>
@@ -340,18 +292,14 @@ def generate_report_and_html():
             <p>Generated on: {datetime.now().strftime('%d-%m-%Y')}</p>
             {recommendation_report}
             <hr>
-            <h2>Portfolio Status</h2>
-            <div class="portfolio-table-container">
             {portfolio_tracking_report}
-            </div>
         </div>
         <div class="footer">
-            <p><strong>Note:</strong> Portfolio tracking uses a weighted average cost basis for profit/loss calculation.</p>
+            <p>Powered by Python, Pandas, and GitHub Actions</p>
         </div>
     </body>
     </html>
     """
-    # --- End Mobile Table Fix (CSS) ---
 
     with open("index.html", "w") as f:
         f.write(full_html)
