@@ -222,7 +222,7 @@ def track_portfolio(db_name="mf.db"):
 
 def generate_report_and_html():
     recommendation_report, recommended_funds = generate_final_report()
-    portfolio_booking_report = book_portfolio(recommended_funds)
+    book_portfolio(recommended_funds)
     portfolio_tracking_report = track_portfolio()
     
     # --- Mobile Table Fix (CSS) ---
