@@ -160,7 +160,11 @@ def track_portfolio(db_name="mf.db"):
         ).reset_index()
 
         # Calculate weighted average purchase NAV (Investment / Units)
-        portfolio_grouped['avg_purchase_nav'] = portfolio_grouped['total_investment'] / portfolio_grouped['total_units']
+        # Check to prevent division by zero in case of an error state
+        portfolio_grouped['avg_purchase_nav'] = portfolio_grouped.apply(
+            lambda row: row['total_investment'] / row['total_units'] if row['total_units'] > 0 else 0,
+            axis=1
+        )
         # --- End Weighted Average Cost Basis Calculation ---
 
 
@@ -200,18 +204,12 @@ def track_portfolio(db_name="mf.db"):
                 'profit_loss': 'P/L'
             }
         )
-        # Add data-label attributes for mobile view
+        
+        # Generate the HTML table. The mobile-friendly CSS added previously handles the display.
         html_table = report_df.to_html(index=False, float_format="%.2f", classes='portfolio-table')
         
-        # Manually add data-label for mobile view in the HTML output
-        report_output += html_table.replace('<td>', lambda x: x + ' data-label="{}"'.format(report_df.columns[0] if report_df.columns[0] in ['name', 'category'] else report_df.columns[0].replace(' ', '_'))) # A quick fix for data-label, though not perfect for all columns.
-        report_output = report_output.replace('<th>name</th>', '<th data-label="name">name</th>')
-        report_output = report_output.replace('<th>category</th>', '<th data-label="category">category</th>')
-        report_output = report_output.replace('<th>Investment</th>', '<th data-label="Investment">Investment</th>')
-        report_output = report_output.replace('<th>Avg. Purchase NAV</th>', '<th data-label="Avg. Purchase NAV">Avg. Purchase NAV</th>')
-        report_output = report_output.replace('<th>Current NAV</th>', '<th data-label="Current NAV">Current NAV</th>')
-        report_output = report_output.replace('<th>Current Value</th>', '<th data-label="Current Value">Current Value</th>')
-        report_output = report_output.replace('<th>P/L</th>', '<th data-label="P/L">P/L</th>')
+        # --- FIX: Removed the buggy replace() call and the unnecessary manual replacements ---
+        report_output += html_table 
         
         return report_output
     except Exception as e:
@@ -219,6 +217,7 @@ def track_portfolio(db_name="mf.db"):
     finally:
         c.close()
         conn.close()
+
 
 def generate_report_and_html():
     recommendation_report, recommended_funds = generate_final_report()
