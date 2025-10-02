@@ -39,7 +39,6 @@ def generate_final_report(db_name="mf.db"):
         }
 
         report_output = "<h3>Mutual Fund Recommendations</h3>"
-        report_output += "<p>This report provides top-rated funds based on your criteria.</p>"
         
         recommended_funds = []
         for category, data in allocation_data.items():
@@ -130,14 +129,9 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
 
     cur.executemany("INSERT INTO virtual_portfolio VALUES (?, ?, ?, ?, ?, ?, ?)", portfolio_data)
     c.commit()
-
-    portfolio_df = pd.DataFrame(portfolio_data, columns=['scheme_code', 'name', 'category', 'investment_amount', 'purchase_nav', 'units', 'purchase_date'])
-    
-    portfolio_output = "<h3>💰 Virtual Portfolio Created</h3><p>Your virtual portfolio has been successfully booked with an initial investment of ₹10,000.</p>"
-    portfolio_output += portfolio_df[['name', 'category', 'investment_amount', 'units', 'purchase_date']].to_html(index=False)
     c.close()
     conn.close()
-    return portfolio_output
+    return 1
 
 def track_portfolio(db_name="mf.db"):
     c = sqlite3.connect("portfolio.db")
@@ -295,10 +289,8 @@ def generate_report_and_html():
     <body>
         <div class="container">
             <h1>FinZen: Mutual Fund Report</h1>
-            <p>Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>Generated on: {datetime.now().strftime('%d-%m-%Y')}</p>
             {recommendation_report}
-            <hr>
-            {portfolio_booking_report}
             <hr>
             {portfolio_tracking_report}
         </div>
