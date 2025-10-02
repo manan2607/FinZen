@@ -83,17 +83,15 @@
                     overflow-x: auto;
                 }
                 
-                /* Remove the previous block-level display rules that hid the table */
+                /* Reset table display to standard for scrolling */
                 table, th, td, tr {
-                    display: table; /* Reset to standard table display */
+                    display: table; 
                 }
                 
-                /* Ensure the table is visible and its elements are rendered normally */
                 table {
-                    min-width: 600px; /* Ensure table is wider than the viewport to allow scrolling */
+                    min-width: 600px; /* Ensures table is wider than the viewport */
                 }
                 
-                /* Remove mobile-specific list-like formatting */
                 thead tr {
                     position: static;
                     top: auto;
@@ -105,7 +103,7 @@
                     text-align: left;
                 }
                 
-                /* Hide the data-label content */
+                /* Hide the data-label content, as we are not using the card view */
                 td:before {
                     content: none !important;
                 }
@@ -181,6 +179,9 @@
   </tbody>
 </table>
             </div>
+        </div>
+        <div class="footer">
+            <p><strong>Note:</strong> Portfolio tracking uses a weighted average cost basis for profit/loss calculation.</p>
         </div>
     </body>
     </html>
