@@ -6,9 +6,8 @@ import requests.exceptions
 MAX_RETRIES = 3
 RETRY_DELAY_SECONDS = 10
 
-
+ 
 def initialize_mftool_with_retry(max_retries, delay):
-    """Initializes Mftool with retry logic for network timeouts."""
     for attempt in range(max_retries):
         try:
             print(f"Attempting to initialize Mftool (data fetch) - Attempt {attempt + 1}/{max_retries}...")
