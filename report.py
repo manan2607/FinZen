@@ -142,7 +142,7 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
 
 def track_portfolio(db_name="mf.db"):
     # Using 'portfolio.db' for virtual portfolio
-    c = sqliteite3.connect("portfolio.db")
+    c = sqlite3.connect("portfolio.db")
     # Using 'mf.db' for NAV data
     conn = sqlite3.connect(db_name)
     try:
@@ -350,9 +350,6 @@ def generate_report_and_html():
             <div class="portfolio-table-container">
             {portfolio_tracking_report}
             </div>
-        </div>
-        <div class="footer">
-            <p><strong>Note:</strong> Portfolio tracking uses a weighted average cost basis for profit/loss calculation.</p>
         </div>
     </body>
     </html>
