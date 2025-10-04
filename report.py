@@ -84,15 +84,41 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
     c = sqlite3.connect("portfolio.db")
     cur = c.cursor()
     conn = sqlite3.connect(db_name)
-    cursor = conn.cursor()
-
-    latest_navs = pd.read_sql_query(
-        "SELECT scheme_code, nav_date, nav FROM nav_history WHERE nav_date = (SELECT MAX(nav_date) FROM nav_history)",
+    
+    # 1. Fetch ALL NAV history data
+    all_navs_df = pd.read_sql_query(
+        "SELECT scheme_code, nav_date, nav FROM nav_history",
         conn
     )
-    if latest_navs.empty:
-        return "<p>Could not find latest NAV data. Cannot book portfolio.</p>"
+    
+    if all_navs_df.empty:
+         c.close()
+         conn.close()
+         return "<p>Could not find any NAV data in history. Cannot book portfolio.</p>"
 
+    # 2. Fix Date Format and Find Latest NAV for Each Scheme
+    try:
+        # Assuming format is DD-MM-YYYY based on previous error
+        all_navs_df['nav_date'] = pd.to_datetime(all_navs_df['nav_date'], format='%d-%m-%Y')
+    except ValueError:
+        c.close()
+        conn.close()
+        return "<p>Error: NAV date format in history table is incorrect. Please check data format.</p>"
+        
+    all_navs_df = all_navs_df.sort_values(by=['scheme_code', 'nav_date'], ascending=[True, False])
+    latest_navs = all_navs_df.drop_duplicates(subset='scheme_code', keep='first')
+    
+    if latest_navs.empty:
+        c.close()
+        conn.close()
+        return "<p>Could not process latest NAV data. Cannot book portfolio.</p>"
+
+    # Use the date from the *latest* available NAV across the entire set for the purchase date
+    purchase_date = latest_navs['nav_date'].max().strftime('%Y-%m-%d')
+
+
+    # Ensure the table is created
+    cur.execute('DROP TABLE IF EXISTS virtual_portfolio') # Optional: Clear old bookings
     cur.execute('''
         CREATE TABLE IF NOT EXISTS virtual_portfolio (
             scheme_code TEXT,
@@ -106,14 +132,18 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
     ''')
 
     portfolio_data = []
-    purchase_date = latest_navs['nav_date'].iloc[0]
+    
     for fund in recommended_funds:
         fund_nav_row = latest_navs[latest_navs['scheme_code'] == fund['scheme_code']]
+        
+        # Check if we successfully found a latest NAV for the fund
         if fund_nav_row.empty:
+            print(f"Warning: Skipping fund {fund['name']} (Code: {fund['scheme_code']}) - Latest NAV not found.")
             continue
 
         fund_nav = fund_nav_row['nav'].iloc[0]
 
+        # Calculation logic remains the same
         category_investment = investment_amount * fund['percentage']
         num_funds_in_category = len([f for f in recommended_funds if f['category'] == fund['category']])
         fund_investment = category_investment / num_funds_in_category if num_funds_in_category > 0 else 0
@@ -128,11 +158,18 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
             fund_nav, units, purchase_date
         ))
 
-    cur.executemany("INSERT INTO virtual_portfolio VALUES (?, ?, ?, ?, ?, ?, ?)", portfolio_data)
-    c.commit()
+    # Insert data only if funds were successfully booked
+    if portfolio_data:
+        cur.executemany("INSERT INTO virtual_portfolio VALUES (?, ?, ?, ?, ?, ?, ?)", portfolio_data)
+        c.commit()
+        
     c.close()
     conn.close()
-    return 1
+    
+    if portfolio_data:
+        return f"<p>Successfully booked portfolio of {len(portfolio_data)} funds.</p>"
+    else:
+        return "<p style='color: orange;'>Warning: No funds were successfully booked due to missing NAV data.</p>"
 
 def track_portfolio(db_name="mf.db"):
     c = sqlite3.connect("portfolio.db")
