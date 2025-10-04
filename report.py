@@ -85,7 +85,6 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
     cur = c.cursor()
     conn = sqlite3.connect(db_name)
     
-    # 1. Fetch ALL NAV history data
     all_navs_df = pd.read_sql_query(
         "SELECT scheme_code, nav_date, nav FROM nav_history",
         conn
@@ -96,9 +95,7 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
          conn.close()
          return "<p>Could not find any NAV data in history. Cannot book portfolio.</p>"
 
-    # 2. Fix Date Format and Find Latest NAV for Each Scheme
     try:
-        # Assuming format is DD-MM-YYYY based on previous error
         all_navs_df['nav_date'] = pd.to_datetime(all_navs_df['nav_date'], format='%d-%m-%Y')
     except ValueError:
         c.close()
@@ -113,12 +110,9 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
         conn.close()
         return "<p>Could not process latest NAV data. Cannot book portfolio.</p>"
 
-    # Use the date from the *latest* available NAV across the entire set for the purchase date
     purchase_date = latest_navs['nav_date'].max().strftime('%Y-%m-%d')
 
 
-    # 3. Ensure the table exists without dropping existing data
-    # The 'IF NOT EXISTS' clause is key to preserving previous transactions.
     cur.execute('''
         CREATE TABLE IF NOT EXISTS virtual_portfolio (
             scheme_code TEXT,
@@ -136,13 +130,11 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
     for fund in recommended_funds:
         fund_nav_row = latest_navs[latest_navs['scheme_code'] == fund['scheme_code']]
         
-        # Check if we successfully found a latest NAV for the fund
         if fund_nav_row.empty:
             continue
 
         fund_nav = fund_nav_row['nav'].iloc[0]
 
-        # Calculation logic remains the same
         category_investment = investment_amount * fund['percentage']
         num_funds_in_category = len([f for f in recommended_funds if f['category'] == fund['category']])
         fund_investment = category_investment / num_funds_in_category if num_funds_in_category > 0 else 0
@@ -157,9 +149,7 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
             fund_nav, units, purchase_date
         ))
 
-    # 4. Insert New Transactions (Crucial for cumulative tracking)
     if portfolio_data:
-        # Use simple INSERT INTO which adds new rows, preserving old ones
         cur.executemany("INSERT INTO virtual_portfolio VALUES (?, ?, ?, ?, ?, ?, ?)", portfolio_data)
         c.commit()
         
@@ -175,23 +165,17 @@ def track_portfolio(db_name="mf.db"):
     c = sqlite3.connect("portfolio.db")
     conn = sqlite3.connect(db_name)
     try:
-        # 1. Fetch all individual purchase transactions from the virtual_portfolio
-        # The goal is to aggregate these transactions into a single holding per scheme.
         all_transactions_df = pd.read_sql_query("SELECT * FROM virtual_portfolio", c)
         
         if all_transactions_df.empty:
             return "<p>No virtual portfolio found. Please run the script to book one first.</p>"
 
-        # --- AGGREGATION STEP: Calculate Total Units, Total Investment, and Weighted Avg NAV ---
         
-        # Calculate the total investment for each scheme
         total_investment_df = all_transactions_df.groupby('scheme_code').agg(
             total_investment=('investment_amount', 'sum'),
             total_units=('units', 'sum')
         ).reset_index()
 
-        # Merge transaction details (like name, category) back into the aggregated dataframe
-        # We take the first non-null value for name/category as they should be consistent
         agg_cols_df = all_transactions_df.groupby('scheme_code').agg(
             name=('name', 'first'),
             category=('category', 'first')
@@ -199,21 +183,16 @@ def track_portfolio(db_name="mf.db"):
         
         portfolio_df = pd.merge(total_investment_df, agg_cols_df, on='scheme_code', how='left')
         
-        # Calculate the Weighted Average Purchase NAV
-        # Weighted Average NAV = Total Investment / Total Units
-        # We need a check to avoid division by zero if total_units is 0 (though it shouldn't be here)
         portfolio_df['purchase_nav'] = portfolio_df.apply(
             lambda row: row['total_investment'] / row['total_units'] if row['total_units'] != 0 else 0,
             axis=1
         )
         
-        # Rename columns to match later steps
         portfolio_df.rename(
             columns={'total_investment': 'investment_amount', 'total_units': 'units'}, 
             inplace=True
         )
 
-        # --- NAV FETCHING STEP (The previous fix) ---
         all_navs_df = pd.read_sql_query(
             "SELECT scheme_code, nav, nav_date FROM nav_history",
             conn
@@ -222,7 +201,6 @@ def track_portfolio(db_name="mf.db"):
         if all_navs_df.empty:
              return "<p>Could not find any NAV data in history. Cannot track portfolio.</p>"
 
-        # Fix Date Format and Find Latest NAV for Each Scheme
         try:
             all_navs_df['nav_date'] = pd.to_datetime(all_navs_df['nav_date'], format='%d-%m-%Y')
         except ValueError as e:
@@ -231,28 +209,23 @@ def track_portfolio(db_name="mf.db"):
         all_navs_df = all_navs_df.sort_values(by=['scheme_code', 'nav_date'], ascending=[True, False])
         latest_navs_df = all_navs_df.drop_duplicates(subset='scheme_code', keep='first')[['scheme_code', 'nav']]
         
-        # --- MERGE AND CALCULATION ---
         
         portfolio_with_nav = pd.merge(portfolio_df, latest_navs_df, on='scheme_code', how='left')
         
-        # Handle missing NAVs gracefully
         funds_with_nav = portfolio_with_nav.dropna(subset=['nav'])
         portfolio_with_nav = funds_with_nav
 
-        # Calculations (now using the aggregated data)
         portfolio_with_nav['current_value'] = portfolio_with_nav['units'] * portfolio_with_nav['nav']
         portfolio_with_nav['profit_loss'] = portfolio_with_nav['current_value'] - portfolio_with_nav['investment_amount']
 
-        # Ensure all columns needed for summary and report are present, even if 0
         if portfolio_with_nav.empty:
-             # Handle case where all funds were dropped due to missing NAV
              total_investment = total_current_value = total_profit_loss = 0
         else:
              total_investment = portfolio_with_nav['investment_amount'].sum()
              total_current_value = portfolio_with_nav['current_value'].sum()
              total_profit_loss = portfolio_with_nav['profit_loss'].sum()
 
-        profit_emoji = "📈" if total_profit_loss >= 0 else "📉"
+        profit_emoji = "" if total_profit_loss >= 0 else ""
 
         report_output = "<h3>Portfolio Performance Report</h3>"
         report_output += f"<p><strong>Total Investment:</strong> ₹{total_investment:,.2f}</p>"
@@ -262,13 +235,10 @@ def track_portfolio(db_name="mf.db"):
         report_output += "<h4>Breakdown by Fund</h4>"
         report_df = portfolio_with_nav[['name', 'category', 'investment_amount', 'current_value', 'profit_loss']]
         
-        # 1. Generate the HTML table from the DataFrame
         table_html = report_df.to_html(index=False, float_format="%.2f")
 
-        # 2. Extract column headers for use as data-labels (Mobile Responsiveness Fix)
         headers = report_df.columns.tolist()
         
-        # 3. Modify the HTML table to add data-label attributes to <td> elements
         tbody_match = re.search(r'<tbody>(.*)</tbody>', table_html, re.DOTALL)
         if tbody_match:
             tbody_content = tbody_match.group(1)
