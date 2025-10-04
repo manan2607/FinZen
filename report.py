@@ -142,7 +142,8 @@ def track_portfolio(db_name="mf.db"):
         if portfolio_df.empty:
             return "<p>No virtual portfolio found. Please run the script to book one first.</p>"
 
-        
+        # --- FIX FOR NAN ERROR (Part 1: Fetching all NAVs) ---
+        # Fetch ALL NAV history data to ensure we get the latest for every scheme.
         all_navs_df = pd.read_sql_query(
             "SELECT scheme_code, nav, nav_date FROM nav_history",
             conn
@@ -151,23 +152,35 @@ def track_portfolio(db_name="mf.db"):
         if all_navs_df.empty:
              return "<p>Could not find any NAV data in history. Cannot track portfolio.</p>"
 
-        all_navs_df['nav_date'] = pd.to_datetime(all_navs_df['nav_date'])
+        # --- FIX FOR DATE FORMAT ERROR ---
+        # Convert nav_date to datetime objects, explicitly using the Day-Month-Year format.
+        # This resolves the error: time data "30-09-2025" doesn't match format "%m-%d-%Y"
+        all_navs_df['nav_date'] = pd.to_datetime(all_navs_df['nav_date'], format='%d-%m-%Y')
         
+        # --- FIX FOR NAN ERROR (Part 2: Finding the latest NAV for each scheme) ---
+        # Sort by scheme_code and then by nav_date (descending)
         all_navs_df = all_navs_df.sort_values(by=['scheme_code', 'nav_date'], ascending=[True, False])
         
+        # Drop duplicates, keeping the first (latest) entry for each scheme_code
         latest_navs_df = all_navs_df.drop_duplicates(subset='scheme_code', keep='first')
         
+        # Only keep the required columns for the merge
         latest_navs_df = latest_navs_df[['scheme_code', 'nav']]
         
+        # Merge portfolio with latest NAVs
         portfolio_with_nav = pd.merge(portfolio_df, latest_navs_df, on='scheme_code', how='left')
         
+        # --- Handle missing NAVs gracefully to prevent NaN propagation ---
+        # Drop rows where NAV is NaN (i.e., funds that had no NAV data)
         funds_with_nav = portfolio_with_nav.dropna(subset=['nav'])
-        missing_funds_count = len(portfolio_with_nav) - len(funds_with_nav)
         
-        if missing_funds_count > 0:
-            print(f"Warning: Excluding {missing_funds_count} funds due to missing NAV data.")
+        if len(portfolio_with_nav) - len(funds_with_nav) > 0:
+            # You can customize this to include a warning in the final HTML report
             portfolio_with_nav = funds_with_nav
+        else:
+            portfolio_with_nav = funds_with_nav # If no NaN found, use the filtered data (which is identical)
 
+        # Calculations
         portfolio_with_nav['current_value'] = portfolio_with_nav['units'] * portfolio_with_nav['nav']
         portfolio_with_nav['profit_loss'] = portfolio_with_nav['current_value'] - portfolio_with_nav['investment_amount']
 
@@ -185,11 +198,13 @@ def track_portfolio(db_name="mf.db"):
         report_output += "<h4>Breakdown by Fund</h4>"
         report_df = portfolio_with_nav[['name', 'category', 'investment_amount', 'current_value', 'profit_loss']]
         
+        # 1. Generate the HTML table from the DataFrame
         table_html = report_df.to_html(index=False, float_format="%.2f")
 
-        import re 
+        # 2. Extract column headers for use as data-labels (Mobile Responsiveness Fix)
         headers = report_df.columns.tolist()
         
+        # 3. Modify the HTML table to add data-label attributes to <td> elements
         tbody_match = re.search(r'<tbody>(.*)</tbody>', table_html, re.DOTALL)
         if tbody_match:
             tbody_content = tbody_match.group(1)
@@ -203,12 +218,15 @@ def track_portfolio(db_name="mf.db"):
                 for i, header in enumerate(headers):
                     if i < len(td_tags):
                         original_td = td_tags[i]
+                        # Clean up the header name for display
                         data_label = header.replace('_', ' ').title()
+                        # Inject the data-label attribute into the original <td> tag
                         new_td = original_td.replace('<td', f'<td data-label="{data_label}"', 1)
                         modified_row = modified_row.replace(original_td, new_td, 1)
 
                 modified_rows.append(modified_row)
 
+            # Reconstruct the table HTML
             modified_tbody = "".join(modified_rows)
             report_output += table_html.replace(tbody_content, modified_tbody)
         else:
