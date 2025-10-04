@@ -117,8 +117,8 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
     purchase_date = latest_navs['nav_date'].max().strftime('%Y-%m-%d')
 
 
-    # Ensure the table is created
-    cur.execute('DROP TABLE IF EXISTS virtual_portfolio') # Optional: Clear old bookings
+    # 3. Ensure the table exists without dropping existing data
+    # The 'IF NOT EXISTS' clause is key to preserving previous transactions.
     cur.execute('''
         CREATE TABLE IF NOT EXISTS virtual_portfolio (
             scheme_code TEXT,
@@ -138,7 +138,6 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
         
         # Check if we successfully found a latest NAV for the fund
         if fund_nav_row.empty:
-            print(f"Warning: Skipping fund {fund['name']} (Code: {fund['scheme_code']}) - Latest NAV not found.")
             continue
 
         fund_nav = fund_nav_row['nav'].iloc[0]
@@ -158,8 +157,9 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
             fund_nav, units, purchase_date
         ))
 
-    # Insert data only if funds were successfully booked
+    # 4. Insert New Transactions (Crucial for cumulative tracking)
     if portfolio_data:
+        # Use simple INSERT INTO which adds new rows, preserving old ones
         cur.executemany("INSERT INTO virtual_portfolio VALUES (?, ?, ?, ?, ?, ?, ?)", portfolio_data)
         c.commit()
         
@@ -167,9 +167,9 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
     conn.close()
     
     if portfolio_data:
-        return f"<p>Successfully booked portfolio of {len(portfolio_data)} funds.</p>"
+        return f"<p>Successfully booked {len(portfolio_data)} new transactions into the portfolio.</p>"
     else:
-        return "<p style='color: orange;'>Warning: No funds were successfully booked due to missing NAV data.</p>"
+        return "<p style='color: orange;'>Warning: No new transactions were booked due to missing NAV data for recommended funds.</p>"
 
 def track_portfolio(db_name="mf.db"):
     c = sqlite3.connect("portfolio.db")
