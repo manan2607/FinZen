@@ -1,6 +1,7 @@
 import sqlite3
 import pandas as pd
 from datetime import datetime
+import re 
 
 
 def generate_final_report(db_name="mf.db"):
@@ -8,13 +9,13 @@ def generate_final_report(db_name="mf.db"):
     conn = sqlite3.connect(db_name)
     try:
         metrics_df = pd.read_sql_query("SELECT * FROM fund_metrics", conn)
-        
+
         if metrics_df.empty:
             return "<p>No metrics found in the database. Please run the analysis script first.</p>", None
 
 
         filtered_df = metrics_df[
-            (metrics_df['sharpe_ratio'] > 0.0) & 
+            (metrics_df['sharpe_ratio'] > 0.0) &
             (metrics_df['sortino_ratio'] > 0.0) &
             (metrics_df['max_drawdown'] < 25.0) &
             (metrics_df['volatility'] < 25.0)
@@ -22,7 +23,7 @@ def generate_final_report(db_name="mf.db"):
 
         if filtered_df.empty:
             return "<p>No funds meet the filtering criteria. Skipping final report.</p>", None
-            
+
         filtered_df['final_score'] = (
             filtered_df['sharpe_ratio'] * 0.4 +
             filtered_df['sortino_ratio'] * 0.4 +
@@ -39,8 +40,7 @@ def generate_final_report(db_name="mf.db"):
         }
 
         report_output = "<h3>Mutual Fund Recommendations</h3>"
-        report_output += "<p>This report provides top-rated funds based on your criteria.</p>"
-        
+
         recommended_funds = []
         for category, data in allocation_data.items():
             keywords = data['keywords']
@@ -54,8 +54,8 @@ def generate_final_report(db_name="mf.db"):
                         <li>
                             <strong>{row.name}</strong><br>
                             <small>
-                                Sharpe: {row.sharpe_ratio:.2f} | 
-                                Sortino: {row.sortino_ratio:.2f} | 
+                                Sharpe: {row.sharpe_ratio:.2f} |
+                                Sortino: {row.sortino_ratio:.2f} |
                                 Alpha: {row.alpha:.2f}%
                             </small>
                         </li>
@@ -69,10 +69,10 @@ def generate_final_report(db_name="mf.db"):
             else:
                 report_output += "<li>No suitable funds found for this category.</li>"
             report_output += "</ul>"
-        
-        return report_output, recommended_funds 
+
+        return report_output, recommended_funds
     except Exception as e:
-        return f"An error occurred: {e}", None 
+        return f"An error occurred: {e}", None
     finally:
         conn.close()
 
@@ -80,7 +80,7 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
 
     if not recommended_funds:
         return "<p>No funds to book. Skipping portfolio creation.</p>"
-    
+
     c = sqlite3.connect("portfolio.db")
     cur = c.cursor()
     conn = sqlite3.connect(db_name)
@@ -92,7 +92,7 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
     )
     if latest_navs.empty:
         return "<p>Could not find latest NAV data. Cannot book portfolio.</p>"
- 
+
     cur.execute('''
         CREATE TABLE IF NOT EXISTS virtual_portfolio (
             scheme_code TEXT,
@@ -111,13 +111,13 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
         fund_nav_row = latest_navs[latest_navs['scheme_code'] == fund['scheme_code']]
         if fund_nav_row.empty:
             continue
-        
+
         fund_nav = fund_nav_row['nav'].iloc[0]
-        
+
         category_investment = investment_amount * fund['percentage']
         num_funds_in_category = len([f for f in recommended_funds if f['category'] == fund['category']])
         fund_investment = category_investment / num_funds_in_category if num_funds_in_category > 0 else 0
-        
+
         if fund_nav > 0:
             units = fund_investment / fund_nav
         else:
@@ -130,14 +130,9 @@ def book_portfolio(recommended_funds, db_name="mf.db", investment_amount=15000):
 
     cur.executemany("INSERT INTO virtual_portfolio VALUES (?, ?, ?, ?, ?, ?, ?)", portfolio_data)
     c.commit()
-
-    portfolio_df = pd.DataFrame(portfolio_data, columns=['scheme_code', 'name', 'category', 'investment_amount', 'purchase_nav', 'units', 'purchase_date'])
-    
-    portfolio_output = "<h3>💰 Virtual Portfolio Created</h3><p>Your virtual portfolio has been successfully booked with an initial investment of ₹10,000.</p>"
-    portfolio_output += portfolio_df[['name', 'category', 'investment_amount', 'units', 'purchase_date']].to_html(index=False)
     c.close()
     conn.close()
-    return portfolio_output
+    return 1
 
 def track_portfolio(db_name="mf.db"):
     c = sqlite3.connect("portfolio.db")
@@ -157,22 +152,52 @@ def track_portfolio(db_name="mf.db"):
         portfolio_with_nav = pd.merge(portfolio_df, latest_navs_df, on='scheme_code', how='left')
         portfolio_with_nav['current_value'] = portfolio_with_nav['units'] * portfolio_with_nav['nav']
         portfolio_with_nav['profit_loss'] = portfolio_with_nav['current_value'] - portfolio_with_nav['investment_amount']
-        
+
         total_investment = portfolio_with_nav['investment_amount'].sum()
         total_current_value = portfolio_with_nav['current_value'].sum()
         total_profit_loss = portfolio_with_nav['profit_loss'].sum()
-        
-        profit_emoji = "" if total_profit_loss >= 0 else ""
-        
+
+        profit_emoji = "📈" if total_profit_loss >= 0 else "📉"
+
         report_output = "<h3>Portfolio Performance Report</h3>"
         report_output += f"<p><strong>Total Investment:</strong> ₹{total_investment:,.2f}</p>"
         report_output += f"<p><strong>Current Value:</strong> ₹{total_current_value:,.2f}</p>"
         report_output += f"<p><strong>Profit/Loss:</strong> ₹{total_profit_loss:,.2f} {profit_emoji}</p>"
-        
+
         report_output += "<h4>Breakdown by Fund</h4>"
         report_df = portfolio_with_nav[['name', 'category', 'investment_amount', 'current_value', 'profit_loss']]
-        report_output += report_df.to_html(index=False, float_format="%.2f")
         
+        table_html = report_df.to_html(index=False, float_format="%.2f")
+        headers = report_df.columns.tolist()
+        
+        tbody_match = re.search(r'<tbody>(.*)</tbody>', table_html, re.DOTALL)
+        if tbody_match:
+            tbody_content = tbody_match.group(1)
+            
+            rows = re.findall(r'<tr[^>]*>.*?</tr>', tbody_content, re.DOTALL)
+            modified_rows = []
+            
+            for row in rows:
+                cells = re.findall(r'<td[^>]*>(.*?)</td>', row)
+                modified_row = row
+                
+                for i, header in enumerate(headers):
+                    if i < len(cells):
+                        td_tags = re.findall(r'<td[^>]*>.*?</td>', row)
+                        
+                        if i < len(td_tags):
+                            original_td = td_tags[i]
+                            data_label = header.replace('_', ' ').title()
+                            new_td = original_td.replace('<td', f'<td data-label="{data_label}"', 1)
+                            modified_row = modified_row.replace(original_td, new_td, 1)
+
+                modified_rows.append(modified_row)
+
+            modified_tbody = "".join(modified_rows)
+            report_output += table_html.replace(tbody_content, modified_tbody)
+        else:
+            report_output += table_html
+            
         return report_output
     except Exception as e:
         return f"An error occurred: {e}"
@@ -184,7 +209,7 @@ def generate_report_and_html():
     recommendation_report, recommended_funds = generate_final_report()
     portfolio_booking_report = book_portfolio(recommended_funds)
     portfolio_tracking_report = track_portfolio()
-    
+
     full_html = f"""
     <!DOCTYPE html>
     <html lang="en">
@@ -259,7 +284,6 @@ def generate_report_and_html():
                 color: #888;
             }}
 
-            /* Responsive adjustments */
             @media (max-width: 600px) {{
                 body {{ padding: 10px; }}
                 .container {{ padding: 15px; }}
@@ -295,15 +319,10 @@ def generate_report_and_html():
     <body>
         <div class="container">
             <h1>FinZen: Mutual Fund Report</h1>
-            <p>Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+            <p>Generated on: {datetime.now().strftime('%d-%m-%Y')}</p>
             {recommendation_report}
             <hr>
-            {portfolio_booking_report}
-            <hr>
             {portfolio_tracking_report}
-        </div>
-        <div class="footer">
-            <p>Powered by Python, Pandas, and GitHub Actions</p>
         </div>
     </body>
     </html>
