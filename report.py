@@ -142,14 +142,32 @@ def track_portfolio(db_name="mf.db"):
         if portfolio_df.empty:
             return "<p>No virtual portfolio found. Please run the script to book one first.</p>"
 
-        latest_navs_df = pd.read_sql_query(
-            "SELECT scheme_code, nav FROM nav_history WHERE nav_date = (SELECT MAX(nav_date) FROM nav_history)",
+        
+        all_navs_df = pd.read_sql_query(
+            "SELECT scheme_code, nav, nav_date FROM nav_history",
             conn
         )
-        if latest_navs_df.empty:
-            return "<p>Could not find latest NAV data. Cannot track portfolio.</p>"
+        
+        if all_navs_df.empty:
+             return "<p>Could not find any NAV data in history. Cannot track portfolio.</p>"
 
+        all_navs_df['nav_date'] = pd.to_datetime(all_navs_df['nav_date'])
+        
+        all_navs_df = all_navs_df.sort_values(by=['scheme_code', 'nav_date'], ascending=[True, False])
+        
+        latest_navs_df = all_navs_df.drop_duplicates(subset='scheme_code', keep='first')
+        
+        latest_navs_df = latest_navs_df[['scheme_code', 'nav']]
+        
         portfolio_with_nav = pd.merge(portfolio_df, latest_navs_df, on='scheme_code', how='left')
+        
+        funds_with_nav = portfolio_with_nav.dropna(subset=['nav'])
+        missing_funds_count = len(portfolio_with_nav) - len(funds_with_nav)
+        
+        if missing_funds_count > 0:
+            print(f"Warning: Excluding {missing_funds_count} funds due to missing NAV data.")
+            portfolio_with_nav = funds_with_nav
+
         portfolio_with_nav['current_value'] = portfolio_with_nav['units'] * portfolio_with_nav['nav']
         portfolio_with_nav['profit_loss'] = portfolio_with_nav['current_value'] - portfolio_with_nav['investment_amount']
 
@@ -168,28 +186,26 @@ def track_portfolio(db_name="mf.db"):
         report_df = portfolio_with_nav[['name', 'category', 'investment_amount', 'current_value', 'profit_loss']]
         
         table_html = report_df.to_html(index=False, float_format="%.2f")
+
+        import re 
         headers = report_df.columns.tolist()
         
         tbody_match = re.search(r'<tbody>(.*)</tbody>', table_html, re.DOTALL)
         if tbody_match:
             tbody_content = tbody_match.group(1)
-            
             rows = re.findall(r'<tr[^>]*>.*?</tr>', tbody_content, re.DOTALL)
             modified_rows = []
             
             for row in rows:
-                cells = re.findall(r'<td[^>]*>(.*?)</td>', row)
                 modified_row = row
+                td_tags = re.findall(r'<td[^>]*>.*?</td>', row)
                 
                 for i, header in enumerate(headers):
-                    if i < len(cells):
-                        td_tags = re.findall(r'<td[^>]*>.*?</td>', row)
-                        
-                        if i < len(td_tags):
-                            original_td = td_tags[i]
-                            data_label = header.replace('_', ' ').title()
-                            new_td = original_td.replace('<td', f'<td data-label="{data_label}"', 1)
-                            modified_row = modified_row.replace(original_td, new_td, 1)
+                    if i < len(td_tags):
+                        original_td = td_tags[i]
+                        data_label = header.replace('_', ' ').title()
+                        new_td = original_td.replace('<td', f'<td data-label="{data_label}"', 1)
+                        modified_row = modified_row.replace(original_td, new_td, 1)
 
                 modified_rows.append(modified_row)
 
