@@ -76,47 +76,32 @@ def calculate_alpha(fund_df, benchmark_data, risk_free_rate=0.07):
     if benchmark_data.empty or fund_df.empty:
         return 0.0
 
-    # 1. Prepare and Align Data
     fund_returns = fund_df['nav'].pct_change().dropna()
     benchmark_returns = benchmark_data['Close'].pct_change().dropna()
 
-    # Align the two return series based on common dates
     aligned_returns = pd.concat([fund_returns.rename('fund'), benchmark_returns.rename('benchmark')], axis=1).dropna()
     
-    if len(aligned_returns) < 30: # Need sufficient data points for regression
+    if len(aligned_returns) < 30: 
         return 0.0
 
-    # 2. Calculate Daily Excess Returns
     daily_rfr = (1 + risk_free_rate)**(1/252) - 1
     
     excess_fund_returns = aligned_returns['fund'] - daily_rfr
     excess_bench_returns = aligned_returns['benchmark'] - daily_rfr
 
-    # 3. Perform Linear Regression (OLS)
-    # y = fund excess returns, X = benchmark excess returns
-    # We are calculating: E(Rp) - Rf = Alpha + Beta * [E(Rb) - Rf]
-    
-    # Add a constant term for the intercept (Alpha)
     X = sm.add_constant(excess_bench_returns) 
     y = excess_fund_returns
 
     try:
-        # Using statsmodels for robust regression
         import statsmodels.api as sm
         model = sm.OLS(y, X).fit()
-        # The intercept is the daily Alpha
         daily_alpha = model.params['const']
-        # Annualize Alpha (multiply by trading days)
         annualized_alpha = daily_alpha * 252
-        return annualized_alpha * 100 # return as a percentage
+        return annualized_alpha * 100 
     except Exception:
-        return 0.0 # Handle cases where regression fails
-    
-
+        return 0.0 
 
 if __name__ == "__main__":
-    import statsmodels.api as sm # Import this for the corrected Alpha
-
     db_conn = sqlite3.connect('mf.db')
     print("Starting comprehensive analysis for all funds...")
 
@@ -126,43 +111,17 @@ if __name__ == "__main__":
         db_conn.close()
         exit()
 
-    # --- CORRECTION: ESTABLISH COMMON GROUND ---
-    LOOKBACK_YEARS = 2 # Define the look-back period (e.g., 3 years)
-    MIN_DAYS_REQUIRED = int(LOOKBACK_YEARS * 240) # Approx 3 years of days
-    
-    # 1. Define the end date for the analysis (latest available data)
-    end_date_common = all_funds_df['nav_date'].max().date()
-    
-    # 2. Define the start date for the analysis
-    from datetime import timedelta
-    start_date_common = (all_funds_df['nav_date'].max() - timedelta(days=MIN_DAYS_REQUIRED)).date()
-    
-    # 3. Fetch benchmark data ONLY for the common period
-    benchmark_data = fetch_benchmark_data('^NSEI', start_date_common, end_date_common)
-    
-    # Filter the primary fund data frame to the common period
-    analysis_df = all_funds_df[all_funds_df['nav_date'].dt.date >= start_date_common].copy()
-
-    # --- Prepare Benchmark Data for Metric Functions ---
-    # Need to set the date as index and ensure we only have the 'Close' price
-    benchmark_data.index = pd.to_datetime(benchmark_data.index)
-    benchmark_data = benchmark_data[['Close']]
+    start_date_all = all_funds_df['nav_date'].min().date()
+    end_date_all = all_funds_df['nav_date'].max().date()
+    benchmark_data = fetch_benchmark_data('^NSEI', start_date_all, end_date_all)
 
     fund_metrics = []
 
-    # Iterate over the FILTERED data
-    for scheme_code, group in analysis_df.groupby('scheme_code'):
-        
-        # 4. Final check: Skip funds that don't have sufficient data for the common period
-        # We check for 90% of the required days to allow for holidays/missing data
-        if len(group) < MIN_DAYS_REQUIRED * 0.9: 
-            print(f"Skipping {group['scheme_name'].iloc[0]}: insufficient data for {LOOKBACK_YEARS} years.")
+    for scheme_code, group in all_funds_df.groupby('scheme_code'):
+        if len(group) < 365:
             continue
 
-        # Sort and set index on the common time window
         group_sorted = group.sort_values('nav_date').set_index('nav_date')
-        
-        # --- ALL CALCULATIONS ARE NOW BASED ON THE COMMON PERIOD ---
         daily_returns_df = calculate_daily_returns(group_sorted)
         if daily_returns_df.empty:
             continue
@@ -171,20 +130,29 @@ if __name__ == "__main__":
         sharpe = calculate_sharpe_ratio(daily_returns_df['daily_returns'])
         sortino = calculate_sortino_ratio(daily_returns_df['daily_returns'])
         drawdown = calculate_max_drawdown(group_sorted['nav'])
-        
-        # Pass the correctly prepared benchmark data
-        alpha = calculate_alpha(group_sorted, benchmark_data) 
+        alpha = calculate_alpha(group_sorted, benchmark_data)
 
         fund_metrics.append({
             'scheme_code': scheme_code,
             'name': group['scheme_name'].iloc[0],
             'category': group['scheme_category'].iloc[0],
-            'period_years': LOOKBACK_YEARS, # Add the period to the output
             'volatility': round(vol, 2),
             'sharpe_ratio': round(sharpe, 2),
             'sortino_ratio': round(sortino, 2),
             'max_drawdown': round(drawdown * 100, 2),
-            'alpha_jensens': round(alpha, 2) # Rename Alpha for clarity
+            'alpha': round(alpha, 2)
         })
 
-    # ... (rest of your existing code to create metrics_df and save)
+    metrics_df = pd.DataFrame(fund_metrics)
+
+    if not metrics_df.empty:
+        print("\n--- Advanced Performance Metrics ---")
+    else:
+        print("No funds with sufficient data for analysis.")
+    
+    if not metrics_df.empty:
+        metrics_df.to_sql('fund_metrics', db_conn, if_exists='replace', index=False)
+        print("\nMetrics table updated successfully with names and categories.")
+
+    db_conn.close()
+    print("\nAnalysis complete. Database connection closed.")
