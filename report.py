@@ -1,6 +1,7 @@
 import sqlite3
 import pandas as pd
 from datetime import datetime
+import re 
 
 
 def generate_final_report(db_name="mf.db"):
@@ -165,8 +166,38 @@ def track_portfolio(db_name="mf.db"):
 
         report_output += "<h4>Breakdown by Fund</h4>"
         report_df = portfolio_with_nav[['name', 'category', 'investment_amount', 'current_value', 'profit_loss']]
-        report_output += report_df.to_html(index=False, float_format="%.2f")
+        
+        table_html = report_df.to_html(index=False, float_format="%.2f")
+        headers = report_df.columns.tolist()
+        
+        tbody_match = re.search(r'<tbody>(.*)</tbody>', table_html, re.DOTALL)
+        if tbody_match:
+            tbody_content = tbody_match.group(1)
+            
+            rows = re.findall(r'<tr[^>]*>.*?</tr>', tbody_content, re.DOTALL)
+            modified_rows = []
+            
+            for row in rows:
+                cells = re.findall(r'<td[^>]*>(.*?)</td>', row)
+                modified_row = row
+                
+                for i, header in enumerate(headers):
+                    if i < len(cells):
+                        td_tags = re.findall(r'<td[^>]*>.*?</td>', row)
+                        
+                        if i < len(td_tags):
+                            original_td = td_tags[i]
+                            data_label = header.replace('_', ' ').title()
+                            new_td = original_td.replace('<td', f'<td data-label="{data_label}"', 1)
+                            modified_row = modified_row.replace(original_td, new_td, 1)
 
+                modified_rows.append(modified_row)
+
+            modified_tbody = "".join(modified_rows)
+            report_output += table_html.replace(tbody_content, modified_tbody)
+        else:
+            report_output += table_html
+            
         return report_output
     except Exception as e:
         return f"An error occurred: {e}"
@@ -253,7 +284,6 @@ def generate_report_and_html():
                 color: #888;
             }}
 
-            /* Responsive adjustments */
             @media (max-width: 600px) {{
                 body {{ padding: 10px; }}
                 .container {{ padding: 15px; }}
