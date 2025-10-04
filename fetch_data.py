@@ -6,7 +6,7 @@ import requests.exceptions
 MAX_RETRIES = 3
 RETRY_DELAY_SECONDS = 10
 
- 
+
 def initialize_mftool_with_retry(max_retries, delay):
     for attempt in range(max_retries):
         try:
