@@ -175,12 +175,45 @@ def track_portfolio(db_name="mf.db"):
     c = sqlite3.connect("portfolio.db")
     conn = sqlite3.connect(db_name)
     try:
-        portfolio_df = pd.read_sql_query("SELECT * FROM virtual_portfolio", c)
-        if portfolio_df.empty:
+        # 1. Fetch all individual purchase transactions from the virtual_portfolio
+        # The goal is to aggregate these transactions into a single holding per scheme.
+        all_transactions_df = pd.read_sql_query("SELECT * FROM virtual_portfolio", c)
+        
+        if all_transactions_df.empty:
             return "<p>No virtual portfolio found. Please run the script to book one first.</p>"
 
-        # --- FIX FOR NAN ERROR (Part 1: Fetching all NAVs) ---
-        # Fetch ALL NAV history data to ensure we get the latest for every scheme.
+        # --- AGGREGATION STEP: Calculate Total Units, Total Investment, and Weighted Avg NAV ---
+        
+        # Calculate the total investment for each scheme
+        total_investment_df = all_transactions_df.groupby('scheme_code').agg(
+            total_investment=('investment_amount', 'sum'),
+            total_units=('units', 'sum')
+        ).reset_index()
+
+        # Merge transaction details (like name, category) back into the aggregated dataframe
+        # We take the first non-null value for name/category as they should be consistent
+        agg_cols_df = all_transactions_df.groupby('scheme_code').agg(
+            name=('name', 'first'),
+            category=('category', 'first')
+        ).reset_index()
+        
+        portfolio_df = pd.merge(total_investment_df, agg_cols_df, on='scheme_code', how='left')
+        
+        # Calculate the Weighted Average Purchase NAV
+        # Weighted Average NAV = Total Investment / Total Units
+        # We need a check to avoid division by zero if total_units is 0 (though it shouldn't be here)
+        portfolio_df['purchase_nav'] = portfolio_df.apply(
+            lambda row: row['total_investment'] / row['total_units'] if row['total_units'] != 0 else 0,
+            axis=1
+        )
+        
+        # Rename columns to match later steps
+        portfolio_df.rename(
+            columns={'total_investment': 'investment_amount', 'total_units': 'units'}, 
+            inplace=True
+        )
+
+        # --- NAV FETCHING STEP (The previous fix) ---
         all_navs_df = pd.read_sql_query(
             "SELECT scheme_code, nav, nav_date FROM nav_history",
             conn
@@ -189,41 +222,35 @@ def track_portfolio(db_name="mf.db"):
         if all_navs_df.empty:
              return "<p>Could not find any NAV data in history. Cannot track portfolio.</p>"
 
-        # --- FIX FOR DATE FORMAT ERROR ---
-        # Convert nav_date to datetime objects, explicitly using the Day-Month-Year format.
-        # This resolves the error: time data "30-09-2025" doesn't match format "%m-%d-%Y"
-        all_navs_df['nav_date'] = pd.to_datetime(all_navs_df['nav_date'], format='%d-%m-%Y')
-        
-        # --- FIX FOR NAN ERROR (Part 2: Finding the latest NAV for each scheme) ---
-        # Sort by scheme_code and then by nav_date (descending)
+        # Fix Date Format and Find Latest NAV for Each Scheme
+        try:
+            all_navs_df['nav_date'] = pd.to_datetime(all_navs_df['nav_date'], format='%d-%m-%Y')
+        except ValueError as e:
+            return f"An error occurred in date conversion: {e}"
+            
         all_navs_df = all_navs_df.sort_values(by=['scheme_code', 'nav_date'], ascending=[True, False])
+        latest_navs_df = all_navs_df.drop_duplicates(subset='scheme_code', keep='first')[['scheme_code', 'nav']]
         
-        # Drop duplicates, keeping the first (latest) entry for each scheme_code
-        latest_navs_df = all_navs_df.drop_duplicates(subset='scheme_code', keep='first')
+        # --- MERGE AND CALCULATION ---
         
-        # Only keep the required columns for the merge
-        latest_navs_df = latest_navs_df[['scheme_code', 'nav']]
-        
-        # Merge portfolio with latest NAVs
         portfolio_with_nav = pd.merge(portfolio_df, latest_navs_df, on='scheme_code', how='left')
         
-        # --- Handle missing NAVs gracefully to prevent NaN propagation ---
-        # Drop rows where NAV is NaN (i.e., funds that had no NAV data)
+        # Handle missing NAVs gracefully
         funds_with_nav = portfolio_with_nav.dropna(subset=['nav'])
-        
-        if len(portfolio_with_nav) - len(funds_with_nav) > 0:
-            # You can customize this to include a warning in the final HTML report
-            portfolio_with_nav = funds_with_nav
-        else:
-            portfolio_with_nav = funds_with_nav # If no NaN found, use the filtered data (which is identical)
+        portfolio_with_nav = funds_with_nav
 
-        # Calculations
+        # Calculations (now using the aggregated data)
         portfolio_with_nav['current_value'] = portfolio_with_nav['units'] * portfolio_with_nav['nav']
         portfolio_with_nav['profit_loss'] = portfolio_with_nav['current_value'] - portfolio_with_nav['investment_amount']
 
-        total_investment = portfolio_with_nav['investment_amount'].sum()
-        total_current_value = portfolio_with_nav['current_value'].sum()
-        total_profit_loss = portfolio_with_nav['profit_loss'].sum()
+        # Ensure all columns needed for summary and report are present, even if 0
+        if portfolio_with_nav.empty:
+             # Handle case where all funds were dropped due to missing NAV
+             total_investment = total_current_value = total_profit_loss = 0
+        else:
+             total_investment = portfolio_with_nav['investment_amount'].sum()
+             total_current_value = portfolio_with_nav['current_value'].sum()
+             total_profit_loss = portfolio_with_nav['profit_loss'].sum()
 
         profit_emoji = "📈" if total_profit_loss >= 0 else "📉"
 
@@ -255,15 +282,12 @@ def track_portfolio(db_name="mf.db"):
                 for i, header in enumerate(headers):
                     if i < len(td_tags):
                         original_td = td_tags[i]
-                        # Clean up the header name for display
                         data_label = header.replace('_', ' ').title()
-                        # Inject the data-label attribute into the original <td> tag
                         new_td = original_td.replace('<td', f'<td data-label="{data_label}"', 1)
                         modified_row = modified_row.replace(original_td, new_td, 1)
 
                 modified_rows.append(modified_row)
 
-            # Reconstruct the table HTML
             modified_tbody = "".join(modified_rows)
             report_output += table_html.replace(tbody_content, modified_tbody)
         else:
