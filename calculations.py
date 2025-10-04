@@ -3,6 +3,9 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 import warnings
+# --- CRITICAL FIX 2: Import statsmodels globally for alpha calculation ---
+import statsmodels.api as sm 
+from datetime import timedelta 
 
 warnings.filterwarnings('ignore')
 
@@ -15,6 +18,7 @@ def fetch_all_fund_data(db_conn):
     ORDER BY s.scheme_code, h.nav_date ASC
     """
     df = pd.read_sql_query(query, db_conn)
+    # Ensure all date formats are handled robustly
     df['nav_date'] = pd.to_datetime(df['nav_date'], format='mixed', dayfirst=True)
     return df
 
@@ -39,6 +43,7 @@ def calculate_daily_returns(df):
 def calculate_volatility(returns_series):
     if returns_series.empty:
         return 0.0
+    # Annualized volatility uses trading days (252)
     return returns_series.std(ddof=1) * np.sqrt(252)
 
 def calculate_sharpe_ratio(returns_series, risk_free_rate=0.07):
@@ -62,6 +67,7 @@ def calculate_sortino_ratio(returns_series, risk_free_rate=0.07):
     
     if downside_std < 1e-8:
         return 0.0
+    # Annualize downside deviation for the denominator
     return ann_return / (downside_std * np.sqrt(252))
 
 def calculate_max_drawdown(nav_series):
@@ -73,6 +79,7 @@ def calculate_max_drawdown(nav_series):
     return abs(drawdown.min())
 
 def calculate_alpha(fund_df, benchmark_data, risk_free_rate=0.07):
+    # This is the corrected Jensen's Alpha calculation
     if benchmark_data.empty or fund_df.empty:
         return 0.0
 
@@ -89,11 +96,12 @@ def calculate_alpha(fund_df, benchmark_data, risk_free_rate=0.07):
     excess_fund_returns = aligned_returns['fund'] - daily_rfr
     excess_bench_returns = aligned_returns['benchmark'] - daily_rfr
 
+    # Add constant for the intercept (Alpha)
+    # CRITICAL FIX 2: 'sm' is now globally available
     X = sm.add_constant(excess_bench_returns) 
     y = excess_fund_returns
 
     try:
-        import statsmodels.api as sm
         model = sm.OLS(y, X).fit()
         daily_alpha = model.params['const']
         annualized_alpha = daily_alpha * 252
@@ -111,17 +119,40 @@ if __name__ == "__main__":
         db_conn.close()
         exit()
 
-    start_date_all = all_funds_df['nav_date'].min().date()
-    end_date_all = all_funds_df['nav_date'].max().date()
-    benchmark_data = fetch_benchmark_data('^NSEI', start_date_all, end_date_all)
+    # --- CRITICAL FIX 1: ESTABLISH COMMON GROUND ---
+    
+    # 1. Define the desired fixed look-back period (e.g., 2 years)
+    LOOKBACK_YEARS = 1
+    MIN_DAYS_REQUIRED = int(LOOKBACK_YEARS * 240 ) # Require 90% of days for a full period
+
+    # 2. Define the start and end dates for the common period
+    end_date_common = all_funds_df['nav_date'].max().date()
+    start_date_common = (all_funds_df['nav_date'].max() - timedelta(days=int(LOOKBACK_YEARS * 365.25))).date()
+    
+    print(f"Analyzing all funds over a common period of {LOOKBACK_YEARS} years: {start_date_common} to {end_date_common}")
+    
+    # 3. Fetch benchmark data ONLY for the common period
+    benchmark_data = fetch_benchmark_data('^NSEI', start_date_common, end_date_common)
+    benchmark_data.index = pd.to_datetime(benchmark_data.index)
+    benchmark_data = benchmark_data[['Close']]
+
+    # Filter the primary fund data frame to the common period
+    analysis_df = all_funds_df[all_funds_df['nav_date'].dt.date >= start_date_common].copy()
 
     fund_metrics = []
 
-    for scheme_code, group in all_funds_df.groupby('scheme_code'):
-        if len(group) < 365:
+    # Iterate over the FILTERED data
+    for scheme_code, group in analysis_df.groupby('scheme_code'):
+        
+        # 4. Filter out funds that don't have enough data in this common window
+        if len(group) < MIN_DAYS_REQUIRED:
+            print(f"Skipping {group['scheme_name'].iloc[0]}: insufficient data for {LOOKBACK_YEARS} years.")
             continue
 
+        # Sort and set index on the common time window
         group_sorted = group.sort_values('nav_date').set_index('nav_date')
+        
+        # --- ALL CALCULATIONS ARE NOW BASED ON THE COMMON PERIOD ---
         daily_returns_df = calculate_daily_returns(group_sorted)
         if daily_returns_df.empty:
             continue
@@ -136,11 +167,12 @@ if __name__ == "__main__":
             'scheme_code': scheme_code,
             'name': group['scheme_name'].iloc[0],
             'category': group['scheme_category'].iloc[0],
+            'period_years': LOOKBACK_YEARS, # Add the period for context
             'volatility': round(vol, 2),
             'sharpe_ratio': round(sharpe, 2),
             'sortino_ratio': round(sortino, 2),
             'max_drawdown': round(drawdown * 100, 2),
-            'alpha': round(alpha, 2)
+            'alpha_jensens': round(alpha, 2)
         })
 
     metrics_df = pd.DataFrame(fund_metrics)
@@ -148,7 +180,7 @@ if __name__ == "__main__":
     if not metrics_df.empty:
         print("\n--- Advanced Performance Metrics ---")
     else:
-        print("No funds with sufficient data for analysis.")
+        print("No funds with sufficient data for analysis in the specified period.")
     
     if not metrics_df.empty:
         metrics_df.to_sql('fund_metrics', db_conn, if_exists='replace', index=False)
