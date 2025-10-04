@@ -111,6 +111,9 @@ def calculate_alpha(fund_df, benchmark_data, risk_free_rate=0.07):
         return annualized_alpha * 100 # return as a percentage
     except Exception:
         return 0.0 # Handle cases where regression fails
+    
+
+
 if __name__ == "__main__":
     import statsmodels.api as sm # Import this for the corrected Alpha
 
@@ -125,7 +128,7 @@ if __name__ == "__main__":
 
     # --- CORRECTION: ESTABLISH COMMON GROUND ---
     LOOKBACK_YEARS = 3 # Define the look-back period (e.g., 3 years)
-    MIN_DAYS_REQUIRED = int(LOOKBACK_YEARS * 365.25) # Approx 3 years of days
+    MIN_DAYS_REQUIRED = int(LOOKBACK_YEARS * 240) # Approx 3 years of days
     
     # 1. Define the end date for the analysis (latest available data)
     end_date_common = all_funds_df['nav_date'].max().date()
