@@ -62,7 +62,7 @@ try:
 
         print(f"Starting data fetch for the first {max(len(all_schemes), 150)} mutual funds...")
         
-        schemes_to_process = list(all_schemes.items())[60:199]
+        schemes_to_process = list(all_schemes.items())[1:]
 
         for scheme_code, scheme_name in schemes_to_process:
             try:
