@@ -127,7 +127,7 @@ if __name__ == "__main__":
         exit()
 
     # --- CORRECTION: ESTABLISH COMMON GROUND ---
-    LOOKBACK_YEARS = 3 # Define the look-back period (e.g., 3 years)
+    LOOKBACK_YEARS = 2 # Define the look-back period (e.g., 3 years)
     MIN_DAYS_REQUIRED = int(LOOKBACK_YEARS * 240) # Approx 3 years of days
     
     # 1. Define the end date for the analysis (latest available data)
