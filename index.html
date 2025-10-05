@@ -1,0 +1,353 @@
+
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mutual Fund Report</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                background-color: #121212;
+                color: #e0e0e0;
+                line-height: 1.6;
+                margin: 0;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .container {
+                max-width: 800px;
+                width: 100%;
+                background-color: #1e1e1e;
+                padding: 20px;
+                border-radius: 12px;
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            }
+            h1, h2, h3, h4 {
+                color: #f0f0f0;
+                border-bottom: 2px solid #333;
+                padding-bottom: 8px;
+            }
+            h1 { font-size: 2em; text-align: center; }
+            h2 { font-size: 1.5em; }
+            h3 { font-size: 1.2em; }
+            ul { list-style-type: none; padding: 0; }
+            li {
+                background-color: #2a2a2a;
+                margin-bottom: 10px;
+                padding: 15px;
+                border-radius: 8px;
+                border-left: 4px solid #007bff;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+                background-color: #2a2a2a;
+                border-radius: 8px;
+                overflow: hidden;
+            }
+            th, td {
+                padding: 12px 15px;
+                text-align: left;
+                border-bottom: 1px solid #333;
+            }
+            th {
+                background-color: #333;
+                color: #fff;
+                font-weight: bold;
+            }
+            tr:nth-child(even) {
+                background-color: #222;
+            }
+            tr:hover {
+                background-color: #383838;
+            }
+            .footer {
+                text-align: center;
+                margin-top: 30px;
+                font-size: 0.8em;
+                color: #888;
+            }
+
+            @media (max-width: 600px) {
+                body { padding: 10px; }
+                .container { padding: 15px; }
+                table, thead, tbody, th, td, tr {
+                    display: block;
+                }
+                thead tr {
+                    position: absolute;
+                    top: -9999px;
+                    left: -9999px;
+                }
+                tr { margin-bottom: 15px; background-color: #2a2a2a; border-radius: 8px; border: 1px solid #333; }
+                td {
+                    border: none;
+                    border-bottom: 1px solid #444;
+                    position: relative;
+                    padding-left: 50%;
+                    text-align: right;
+                }
+                td:before {
+                    content: attr(data-label);
+                    position: absolute;
+                    left: 0;
+                    width: 50%;
+                    padding-left: 15px;
+                    font-weight: bold;
+                    text-align: left;
+                    color: #999;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>FinZen: Mutual Fund Report</h1>
+            <p>Generated on: 05-10-2025</p>
+            <h3>Mutual Fund Recommendations</h3><h4>Mid & Small-cap (25% Allocation)</h4><ul>
+                        <li>
+                            <strong>BANDHAN SMALL CAP FUND - DIRECT PLAN GROWTH</strong><br>
+                            <small>
+                                Sharpe: 1.40 |
+                                Sortino: 2.07 |
+                                Alpha: 18.81%
+                            </small>
+                        </li>
+                    
+                        <li>
+                            <strong>JM Midcap Fund (Direct) - Growth</strong><br>
+                            <small>
+                                Sharpe: 1.21 |
+                                Sortino: 1.78 |
+                                Alpha: 15.10%
+                            </small>
+                        </li>
+                    
+                        <li>
+                            <strong>JM Midcap Fund (Direct) - IDCW</strong><br>
+                            <small>
+                                Sharpe: 1.21 |
+                                Sortino: 1.78 |
+                                Alpha: 15.10%
+                            </small>
+                        </li>
+                    </ul><h4>Large-cap (30% Allocation)</h4><ul>
+                        <li>
+                            <strong>UTI Nifty 500 Value 50 Index Fund - Direct Plan - Growth Option</strong><br>
+                            <small>
+                                Sharpe: 1.22 |
+                                Sortino: 1.78 |
+                                Alpha: 16.25%
+                            </small>
+                        </li>
+                    
+                        <li>
+                            <strong>UTI Nifty 500 Value 50 Index Fund - Regular Plan - Growth Option</strong><br>
+                            <small>
+                                Sharpe: 1.20 |
+                                Sortino: 1.74 |
+                                Alpha: 15.76%
+                            </small>
+                        </li>
+                    
+                        <li>
+                            <strong>Motilal Oswal Large Cap Direct Plan Growth</strong><br>
+                            <small>
+                                Sharpe: 1.17 |
+                                Sortino: 1.89 |
+                                Alpha: 13.53%
+                            </small>
+                        </li>
+                    </ul><h4>International Equity (20% Allocation)</h4><ul>
+                        <li>
+                            <strong>Axis Global Equity Alpha Fund of Fund - Direct Plan - Growth Option</strong><br>
+                            <small>
+                                Sharpe: 0.71 |
+                                Sortino: 1.14 |
+                                Alpha: 7.98%
+                            </small>
+                        </li>
+                    
+                        <li>
+                            <strong>Axis Global Equity Alpha Fund of Fund - Direct Plan - IDCW</strong><br>
+                            <small>
+                                Sharpe: 0.71 |
+                                Sortino: 1.14 |
+                                Alpha: 7.97%
+                            </small>
+                        </li>
+                    
+                        <li>
+                            <strong>HDFC Developed World Overseas Equity Passive FOF - Direct Plan - Growth Option</strong><br>
+                            <small>
+                                Sharpe: 0.60 |
+                                Sortino: 0.96 |
+                                Alpha: 8.22%
+                            </small>
+                        </li>
+                    </ul><h4>Debt Mutual Funds (10% Allocation)</h4><ul>
+                        <li>
+                            <strong>Invesco India Corporate Bond Fund - Discretionary IDCW (Payout / Reinvestment)</strong><br>
+                            <small>
+                                Sharpe: 0.48 |
+                                Sortino: 4.98 |
+                                Alpha: 1015.01%
+                            </small>
+                        </li>
+                    
+                        <li>
+                            <strong>Invesco India Corporate Bond Fund - Direct Plan - Discretionary IDCW (Payout / Reinvestment)</strong><br>
+                            <small>
+                                Sharpe: 0.51 |
+                                Sortino: 5.59 |
+                                Alpha: 871.99%
+                            </small>
+                        </li>
+                    
+                        <li>
+                            <strong>LIC MF Liquid Fund-Direct Plan-Growth</strong><br>
+                            <small>
+                                Sharpe: 0.14 |
+                                Sortino: 16.04 |
+                                Alpha: 804.82%
+                            </small>
+                        </li>
+                    </ul><h4>Gold (10% Allocation)</h4><ul>
+                        <li>
+                            <strong>Zerodha Gold ETF</strong><br>
+                            <small>
+                                Sharpe: 2.40 |
+                                Sortino: 4.04 |
+                                Alpha: 33.49%
+                            </small>
+                        </li>
+                    
+                        <li>
+                            <strong>Tata Gold Exchange Traded Fund</strong><br>
+                            <small>
+                                Sharpe: 2.17 |
+                                Sortino: 3.56 |
+                                Alpha: 30.86%
+                            </small>
+                        </li>
+                    
+                        <li>
+                            <strong>Tata Gold ETF Fund of Fund Direct Plan Growth Option</strong><br>
+                            <small>
+                                Sharpe: 2.17 |
+                                Sortino: 3.99 |
+                                Alpha: 29.81%
+                            </small>
+                        </li>
+                    </ul>
+            <hr>
+            <h3>Portfolio Performance Report</h3><p><strong>Total Investment:</strong> ₹14,250.00</p><p><strong>Current Value:</strong> ₹14,250.00</p><p><strong>Profit/Loss:</strong> ₹-0.00 </p><h4>Breakdown by Fund</h4><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>name</th>
+      <th>category</th>
+      <th>investment_amount</th>
+      <th>current_value</th>
+      <th>profit_loss</th>
+    </tr>
+  </thead>
+  <tbody><tr>
+      <td data-label="Name">Invesco India Corporate Bond Fund - Discretionary IDCW (Payout / Reinvestment)</td>
+      <td data-label="Category">Debt Mutual Funds</td>
+      <td data-label="Investment Amount">500.00</td>
+      <td data-label="Current Value">500.00</td>
+      <td data-label="Profit Loss">0.00</td>
+    </tr><tr>
+      <td data-label="Name">LIC MF Liquid Fund-Direct Plan-Growth</td>
+      <td data-label="Category">Debt Mutual Funds</td>
+      <td data-label="Investment Amount">500.00</td>
+      <td data-label="Current Value">500.00</td>
+      <td data-label="Profit Loss">0.00</td>
+    </tr><tr>
+      <td data-label="Name">Invesco India Corporate Bond Fund - Direct Plan - Discretionary IDCW (Payout / Reinvestment)</td>
+      <td data-label="Category">Debt Mutual Funds</td>
+      <td data-label="Investment Amount">500.00</td>
+      <td data-label="Current Value">500.00</td>
+      <td data-label="Profit Loss">0.00</td>
+    </tr><tr>
+      <td data-label="Name">BANDHAN SMALL CAP FUND - DIRECT PLAN GROWTH</td>
+      <td data-label="Category">Mid &amp; Small-cap</td>
+      <td data-label="Investment Amount">1250.00</td>
+      <td data-label="Current Value">1250.00</td>
+      <td data-label="Profit Loss">0.00</td>
+    </tr><tr>
+      <td data-label="Name">Axis Global Equity Alpha Fund of Fund - Direct Plan - Growth Option</td>
+      <td data-label="Category">International Equity</td>
+      <td data-label="Investment Amount">1000.00</td>
+      <td data-label="Current Value">1000.00</td>
+      <td data-label="Profit Loss">0.00</td>
+    </tr><tr>
+      <td data-label="Name">Axis Global Equity Alpha Fund of Fund - Direct Plan - IDCW</td>
+      <td data-label="Category">International Equity</td>
+      <td data-label="Investment Amount">1000.00</td>
+      <td data-label="Current Value">1000.00</td>
+      <td data-label="Profit Loss">0.00</td>
+    </tr><tr>
+      <td data-label="Name">HDFC Developed World Overseas Equity Passive FOF - Direct Plan - Growth Option</td>
+      <td data-label="Category">International Equity</td>
+      <td data-label="Investment Amount">1000.00</td>
+      <td data-label="Current Value">1000.00</td>
+      <td data-label="Profit Loss">0.00</td>
+    </tr><tr>
+      <td data-label="Name">JM Midcap Fund (Direct) - IDCW</td>
+      <td data-label="Category">Mid &amp; Small-cap</td>
+      <td data-label="Investment Amount">1250.00</td>
+      <td data-label="Current Value">1250.00</td>
+      <td data-label="Profit Loss">0.00</td>
+    </tr><tr>
+      <td data-label="Name">JM Midcap Fund (Direct) - Growth</td>
+      <td data-label="Category">Mid &amp; Small-cap</td>
+      <td data-label="Investment Amount">1250.00</td>
+      <td data-label="Current Value">1250.00</td>
+      <td data-label="Profit Loss">0.00</td>
+    </tr><tr>
+      <td data-label="Name">UTI Nifty 500 Value 50 Index Fund - Regular Plan - Growth Option</td>
+      <td data-label="Category">Large-cap</td>
+      <td data-label="Investment Amount">1500.00</td>
+      <td data-label="Current Value">1500.00</td>
+      <td data-label="Profit Loss">0.00</td>
+    </tr><tr>
+      <td data-label="Name">UTI Nifty 500 Value 50 Index Fund - Direct Plan - Growth Option</td>
+      <td data-label="Category">Large-cap</td>
+      <td data-label="Investment Amount">1500.00</td>
+      <td data-label="Current Value">1500.00</td>
+      <td data-label="Profit Loss">0.00</td>
+    </tr><tr>
+      <td data-label="Name">Tata Gold Exchange Traded Fund</td>
+      <td data-label="Category">Gold</td>
+      <td data-label="Investment Amount">500.00</td>
+      <td data-label="Current Value">500.00</td>
+      <td data-label="Profit Loss">-0.00</td>
+    </tr><tr>
+      <td data-label="Name">Tata Gold ETF Fund of Fund Direct Plan Growth Option</td>
+      <td data-label="Category">Gold</td>
+      <td data-label="Investment Amount">500.00</td>
+      <td data-label="Current Value">500.00</td>
+      <td data-label="Profit Loss">0.00</td>
+    </tr><tr>
+      <td data-label="Name">Motilal Oswal Large Cap Direct Plan Growth</td>
+      <td data-label="Category">Large-cap</td>
+      <td data-label="Investment Amount">1500.00</td>
+      <td data-label="Current Value">1500.00</td>
+      <td data-label="Profit Loss">0.00</td>
+    </tr><tr>
+      <td data-label="Name">Zerodha Gold ETF</td>
+      <td data-label="Category">Gold</td>
+      <td data-label="Investment Amount">500.00</td>
+      <td data-label="Current Value">500.00</td>
+      <td data-label="Profit Loss">0.00</td>
+    </tr></tbody>
+</table>
+        </div>
+    </body>
+    </html>
+    
