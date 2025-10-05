@@ -2,15 +2,10 @@ import sqlite3
 import pandas as pd
 import numpy as np
 import yfinance as yf
-# CRITICAL IMPORT: Needed for the corrected Alpha calculation
 import statsmodels.api as sm 
 import warnings
 
 warnings.filterwarnings('ignore')
-
-# ====================================================================
-# Data Fetching Functions
-# ====================================================================
 
 def fetch_all_fund_data(db_conn):
     query = """
@@ -30,9 +25,6 @@ def fetch_benchmark_data(ticker, start_date, end_date):
     except Exception:
         return pd.DataFrame()
 
-# ====================================================================
-# Metric Calculation Functions (Unchanged)
-# ====================================================================
 
 def calculate_cagr(start_value, end_value, years):
     if start_value <= 0 or end_value <= 0 or years <= 0:
@@ -49,7 +41,7 @@ def calculate_volatility(returns_series):
     if returns_series.empty:
         return 0.0
     return returns_series.std(ddof=1) * np.sqrt(252)
-
+ 
 def calculate_sharpe_ratio(returns_series, risk_free_rate=0.07):
     if returns_series.empty:
         return 0.0
@@ -81,24 +73,14 @@ def calculate_max_drawdown(nav_series):
     drawdown = (cumulative_returns / peak) - 1
     return abs(drawdown.min())
 
-# ====================================================================
-# Corrected Alpha Calculation
-# ====================================================================
 
 def calculate_alpha(fund_df, benchmark_data, risk_free_rate=0.07):
-    """
-    Calculates Jensen's Alpha using linear regression (CAPM).
-    FIXED: Uses dictionary method for pd.concat to avoid KeyError.
-    """
     if benchmark_data.empty or fund_df.empty:
         return 0.0
 
-    # 1. Calculate daily returns
     fund_returns = fund_df['nav'].pct_change().dropna()
     benchmark_returns = benchmark_data['Close'].pct_change().dropna()
 
-    # CRITICAL FIX for KeyError: 'benchmark'
-    # 2. Align data using a dictionary for explicit column naming
     aligned_returns = pd.concat(
         {
             'fund': fund_returns, 
@@ -107,31 +89,24 @@ def calculate_alpha(fund_df, benchmark_data, risk_free_rate=0.07):
         axis=1
     ).dropna()
     
-    if len(aligned_returns) < 30: # Minimum data points for regression
+    if len(aligned_returns) < 30: 
         return 0.0
 
-    # 3. Calculate daily excess returns
     daily_rfr = (1 + risk_free_rate)**(1/252) - 1
     
     excess_fund_returns = aligned_returns['fund'] - daily_rfr
     excess_bench_returns = aligned_returns['benchmark'] - daily_rfr
 
-    # 4. Perform Linear Regression (OLS)
     X = sm.add_constant(excess_bench_returns) 
     y = excess_fund_returns
 
     try:
         model = sm.OLS(y, X).fit()
-        # The intercept ('const') is the daily Alpha
         daily_alpha = model.params['const']
         annualized_alpha = daily_alpha * 252
-        return annualized_alpha * 100 # return as a percentage
+        return annualized_alpha * 100
     except Exception:
         return 0.0 
-
-# ====================================================================
-# Main Execution Block (Reverted Normalization)
-# ====================================================================
 
 if __name__ == "__main__":
     db_conn = sqlite3.connect('mf.db')
@@ -143,27 +118,22 @@ if __name__ == "__main__":
         db_conn.close()
         exit()
 
-    # --- REVERTED LOGIC: Use min/max dates for the benchmark ---
     start_date_all = all_funds_df['nav_date'].min().date()
     end_date_all = all_funds_df['nav_date'].max().date()
     
-    # Fetch benchmark data for the entire available period
     benchmark_data = fetch_benchmark_data('^NSEI', start_date_all, end_date_all)
     benchmark_data.index = pd.to_datetime(benchmark_data.index)
     benchmark_data = benchmark_data[['Close']]
 
     fund_metrics = []
 
-    # Loop uses the entire unfiltered dataset (no common ground logic)
     for scheme_code, group in all_funds_df.groupby('scheme_code'):
         
-        # Original minimum data check (at least 1 year)
         if len(group) < 365:
             continue
 
         group_sorted = group.sort_values('nav_date').set_index('nav_date')
         
-        # --- Calculations use the full history available for this fund ---
         daily_returns_df = calculate_daily_returns(group_sorted)
         if daily_returns_df.empty:
             continue
@@ -173,7 +143,6 @@ if __name__ == "__main__":
         sortino = calculate_sortino_ratio(daily_returns_df['daily_returns'])
         drawdown = calculate_max_drawdown(group_sorted['nav'])
         
-        # Calculate Alpha using the fund's data and the full benchmark history
         alpha = calculate_alpha(group_sorted, benchmark_data)
 
         fund_metrics.append({
