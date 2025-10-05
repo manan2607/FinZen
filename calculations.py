@@ -184,7 +184,7 @@ if __name__ == "__main__":
             'sharpe_ratio': round(sharpe, 2),
             'sortino_ratio': round(sortino, 2),
             'max_drawdown': round(drawdown * 100, 2),
-            'alpha_jensens': round(alpha, 2)
+            'alpha': round(alpha, 2)
         })
 
     metrics_df = pd.DataFrame(fund_metrics)
